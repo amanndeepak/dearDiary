@@ -1,8 +1,31 @@
 <!DOCTYPE html>
+<!-- 
+  VERCEL DEPLOYMENT:
+  1. Push this file to a GitHub repo
+  2. Import in vercel.com → new project → deploy
+  3. No build settings needed — it's a single HTML file
+  
+  Create vercel.json in repo root:
+  {
+    "rewrites": [{"source": "/(.*)", "destination": "/diary_v2.html"}]
+  }
+  
+  Also add in Firebase Console → Authentication → Authorized domains:
+  your-project.vercel.app
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="description" content="Dastavez — Your personal diary, planner and journal">
+<meta name="theme-color" content="#2c1810" id="meta-theme-color">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dastavez">
+<link rel="manifest" href="/manifest.json">
+<!-- Preconnect for performance -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <title>Dastavez ✦</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 <!-- Firebase SDK -->
@@ -644,24 +667,33 @@ body.focus-mode .focus-overlay{display:flex;}
 #dastavez-loader.fade-out{opacity:0;pointer-events:none;}
 .loader-word{
   font-family:'Playfair Display',serif;
-  font-size:2.4rem;
-  color:rgba(255,255,255,.92);
+  font-size:2.6rem;
+  font-weight:700;
+  color:#fff;
   text-align:center;
-  text-shadow:0 2px 20px rgba(0,0,0,.4);
+  text-shadow:0 2px 24px rgba(0,0,0,.5),0 0 60px rgba(255,255,255,.15);
   opacity:0;
-  transform:translateY(10px);
-  transition:opacity .35s ease, transform .35s ease;
-  min-height:3rem;
-  letter-spacing:.03em;
+  transform:translateY(12px);
+  transition:opacity .4s ease, transform .4s cubic-bezier(.34,1.4,.64,1);
+  min-height:3.5rem;
+  letter-spacing:.04em;
 }
 .loader-word.show{opacity:1;transform:none;}
 .loader-sub{
   font-family:'JetBrains Mono',monospace;
   font-size:.62rem;
-  color:rgba(255,255,255,.4);
-  letter-spacing:.2em;
+  color:rgba(255,255,255,.45);
+  letter-spacing:.25em;
   text-transform:uppercase;
+  margin-top:.3rem;
 }
+.loader-line{
+  width:40px;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent);
+  margin:.6rem auto;
+  animation:loaderLinePulse 1.5s ease-in-out infinite;
+}
+@keyframes loaderLinePulse{0%,100%{width:30px;opacity:.3}50%{width:60px;opacity:.8}}
 .loader-dot{
   width:6px;height:6px;border-radius:50%;
   background:rgba(255,255,255,.3);
@@ -750,6 +782,7 @@ body.focus-mode .app{justify-content:center;}
 <!-- ══ DASTAVEZ LOADER (shown once per session) ══ -->
 <div id="dastavez-loader">
   <div class="loader-word" id="loader-word">Dastavez</div>
+  <div class="loader-line"></div>
   <div class="loader-sub">Your Personal Diary</div>
   <div class="loader-dot"></div>
 </div>
@@ -1298,7 +1331,7 @@ var NOW=new Date(),DL=['M','T','W','T','F','S','S'],todayI=(NOW.getDay()+6)%7;
       wordEl.classList.remove('show');
       setTimeout(function(){wordEl.textContent=words[idx].t;wordEl.classList.add('show');},180);
     }
-  },260);
+  },520);
 })();
 
 
@@ -1313,6 +1346,23 @@ var visSecs=[];
    FIREBASE CONFIGURATION
    Replace these values with your own Firebase project config
    ═══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════
+   FIRESTORE SECURITY RULES — Copy-paste into Firebase Console
+   Firestore Database → Rules tab → Publish
+   ══════════════════════════════════════════════════════════════════
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{userId} {
+         allow read, write: if request.auth != null && request.auth.uid == userId;
+         match /{subcollection}/{docId} {
+           allow read, write: if request.auth != null && request.auth.uid == userId;
+         }
+       }
+     }
+   }
+   ══════════════════════════════════════════════════════════════════ */
 /* ════════════════════════════════════════════════════════════════
    FIREBASE SETUP GUIDE
    ════════════════════════════════════════════════════════════════
@@ -1349,8 +1399,10 @@ function fbInit() {
       _fbApp = firebase.initializeApp(FIREBASE_CONFIG);
     }
     _fbAuth = firebase.auth();
+    /* Persist auth across browser restarts */
+    _fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(function(){});
     _fbDb = firebase.firestore();
-    /* Enable persistence so app works offline */
+    /* Enable offline persistence */
     _fbDb.enablePersistence({synchronizeTabs:true}).catch(function(){});
     try { if(firebase.analytics) firebase.analytics(); } catch(e){}
     return true;
@@ -1389,7 +1441,9 @@ function authRegister() {
   var name = (document.getElementById('reg-name').value || '').trim();
   var email = (document.getElementById('reg-email').value || '').trim();
   var pass = (document.getElementById('reg-pass').value || '');
-  var phone = (document.getElementById('reg-phone').value || '').trim();
+  var phoneRaw = (document.getElementById('reg-phone').value || '').trim();
+  var phone = phoneRaw;
+  if (phone && !phone.startsWith('+')) phone = '+91' + phone.replace(/\D/g,'');
   var errEl = document.getElementById('reg-err');
   if (!name) { errEl.textContent = 'Please enter your name'; return; }
   if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required'; return; }
@@ -1577,34 +1631,57 @@ function saveToCloud(dateStr, data) {
 }
 
 function loadDayFromCloud(dateStr) {
-  save('_viewDate', dateStr); /* persist view date */
+  save('_viewDate', dateStr);
   updateViewingDate(dateStr);
   if (!_currentUser || _currentUser.uid === 'offline') {
     restoreDayData(dateStr);
+    _loadJournalLocal(dateStr);
     return;
   }
   if (!_fbDb) { restoreDayData(dateStr); return; }
   setSyncStatus('syncing');
-  _fbDb.collection('users').doc(_currentUser.uid)
-    .collection('days').doc(dateStr)
-    .get()
-    .then(function(doc) {
-      setSyncStatus('synced');
-      var data = doc.exists ? doc.data() : null;
-      if (data) {
-        save('diary_day_' + dateStr, data); /* cache locally */
-        restoreDayData(dateStr, data);
-      } else {
-        clearDayUI();
-        /* Still try local cache */
-        restoreDayData(dateStr);
+  /* Load day data and journal in parallel */
+  Promise.all([
+    _fbDb.collection('users').doc(_currentUser.uid).collection('days').doc(dateStr).get(),
+    _fbDb.collection('users').doc(_currentUser.uid).collection('journal').doc(dateStr).get()
+  ]).then(function(results) {
+    setSyncStatus('synced');
+    var dayDoc = results[0], journalDoc = results[1];
+    var data = dayDoc.exists ? dayDoc.data() : null;
+    if (data) {
+      save('diary_day_' + dateStr, data);
+      restoreDayData(dateStr, data);
+    } else {
+      clearDayUI();
+      restoreDayData(dateStr);
+    }
+    /* Restore journal content */
+    if (journalDoc && journalDoc.exists) {
+      var ed = document.getElementById('pd-editor');
+      if (ed) {
+        var saved = localStorage.getItem('plain_entry_' + dateStr);
+        var cloudContent = journalDoc.data().content || '';
+        /* Use whichever is newer — cloud content takes priority */
+        setTimeout(function(){
+          if(ed && cloudContent) ed.innerHTML = cloudContent;
+        }, 400);
       }
-    })
-    .catch(function(e) {
-      console.error('Cloud load error:', e);
-      setSyncStatus('error');
-      restoreDayData(dateStr); /* fallback local */
-    });
+    } else {
+      _loadJournalLocal(dateStr);
+    }
+  }).catch(function(e) {
+    console.error('Cloud load error:', e);
+    setSyncStatus('error');
+    restoreDayData(dateStr);
+    _loadJournalLocal(dateStr);
+  });
+}
+function _loadJournalLocal(dateStr) {
+  var saved = localStorage.getItem('plain_entry_' + dateStr);
+  if (saved) {
+    var ed = document.getElementById('pd-editor');
+    if (ed) setTimeout(function(){ if(ed)ed.innerHTML=saved; }, 420);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1690,7 +1767,18 @@ function autoSaveDay() {
 function doSave() {
   autoSaveDay();
   _pdSave();
-  showToast('\u2736 Diary saved!');
+  /* Also save journal HTML to Firebase */
+  (function(){
+    if(!_currentUser||_currentUser.uid==='offline'||!_fbDb)return;
+    var ed=document.getElementById('pd-editor');
+    if(!ed||!ed.innerHTML.trim())return;
+    var dateStr=_viewDate||NOW.toISOString().slice(0,10);
+    _fbDb.collection('users').doc(_currentUser.uid)
+      .collection('journal').doc(dateStr)
+      .set({content:ed.innerHTML,updated:firebase.firestore.FieldValue.serverTimestamp()})
+      .catch(function(e){console.warn('Journal save:',e);});
+  })();
+  showToast('✶ Diary saved!');
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1736,34 +1824,55 @@ function maskPhone(phone) {
 function sendVaultOTP() {
   if (!fbInit()) return;
   var phone = (_currentUser && _currentUser._profile) ? _currentUser._profile.phone : '';
-  if (!phone) { document.getElementById('otp-err').textContent = 'No phone number on file'; return; }
-  document.getElementById('otp-err').textContent = 'Sending OTP...';
+  /* Normalise phone — ensure it has + prefix */
+  if (phone && !phone.startsWith('+')) phone = '+91' + phone.replace(/\D/g,'');
+  var errEl = document.getElementById('otp-err') || document.getElementById('vault-otp-err');
+  if (!phone) { if(errEl)errEl.textContent='No phone number on file. Add one in your profile.'; return; }
+  if(errEl)errEl.textContent='Sending OTP to '+maskPhone(phone)+'...';
+
+  /* Use a SEPARATE secondary Firebase auth instance to avoid 
+     interfering with the existing email/password session */
   try {
-    if (!_otpRecaptchaVerifier) {
-      _otpRecaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-vault', { size: 'invisible' });
+    var secApp;
+    try { secApp = firebase.app('vaultAuth'); }
+    catch(e) { secApp = firebase.initializeApp(FIREBASE_CONFIG, 'vaultAuth'); }
+    var secAuth = secApp.auth();
+
+    /* Reset recaptcha if needed */
+    if(_otpRecaptchaVerifier){
+      try{_otpRecaptchaVerifier.clear();}catch(e2){}
+      _otpRecaptchaVerifier=null;
     }
-    _fbAuth.signInWithPhoneNumber(phone, _otpRecaptchaVerifier)
+    _otpRecaptchaVerifier = new firebase.auth.RecaptchaVerifier(
+      'recaptcha-vault',
+      {size:'invisible', auth: secAuth}
+    );
+
+    secAuth.signInWithPhoneNumber(phone, _otpRecaptchaVerifier)
       .then(function(result) {
         _otpConfirmResult = result;
-        document.getElementById('otp-send-section').style.display = 'none';
-        document.getElementById('otp-verify-section').style.display = '';
-        document.getElementById('otp-err').textContent = '';
-        if(document.getElementById('otp0'))document.getElementById('otp0').focus();
-        /* Also show inline vault inputs if we are inside vault modal */
+        if(errEl)errEl.textContent='';
+        /* Show OTP input boxes */
+        var sendSec = document.getElementById('otp-send-section');
+        if(sendSec)sendSec.style.display='none';
+        var verifySec = document.getElementById('otp-verify-section');
+        if(verifySec)verifySec.style.display='';
         var vInp = document.getElementById('vault-otp-inputs');
-        if (vInp) {
-          vInp.style.display = '';
-          var firstVotp = document.getElementById('votp0');
-          if (firstVotp) firstVotp.focus();
-        }
-        showToast('OTP sent to ' + maskPhone(phone));
+        if(vInp)vInp.style.display='';
+        var first = document.getElementById('votp0') || document.getElementById('otp0');
+        if(first)first.focus();
+        showToast('OTP sent to '+maskPhone(phone));
       })
       .catch(function(e) {
-        document.getElementById('otp-err').textContent = e.message || 'Failed to send OTP';
-        _otpRecaptchaVerifier = null; /* Reset for retry */
+        var msg=e.message||'Failed to send OTP';
+        if(e.code==='auth/invalid-phone-number')msg='Invalid phone number format. Use +91XXXXXXXXXX';
+        if(e.code==='auth/too-many-requests')msg='Too many attempts. Try again in a few minutes.';
+        if(errEl)errEl.textContent=msg;
+        _otpRecaptchaVerifier=null;
       });
   } catch(e) {
-    document.getElementById('otp-err').textContent = e.message;
+    if(errEl)errEl.textContent=e.message;
+    _otpRecaptchaVerifier=null;
   }
 }
 
@@ -2669,6 +2778,13 @@ function togglePin(sec){
 }
 
 /* ── sections manager ── */
+/* ── New Section Helpers ── */
+function addFinRow(){var l=document.getElementById('fin-items');if(!l)return;var d=document.createElement('div');d.style.cssText='display:flex;gap:.4rem;align-items:center;padding:.24rem 0;border-bottom:1px solid var(--line);';d.innerHTML='<select style="border:none;background:transparent;font-family:JetBrains Mono,monospace;font-size:.6rem;color:var(--muted);outline:none;cursor:pointer"><option>Expense</option><option>Income</option></select><input style="flex:1;border:none;outline:none;background:transparent;font-family:Lora,serif;font-size:.82rem;color:var(--ink);" placeholder="Description..."><input type="number" style="width:72px;border:none;border-bottom:1.5px solid var(--line);outline:none;font-family:JetBrains Mono,monospace;font-size:.78rem;text-align:right;background:transparent;color:var(--ink);" placeholder="₹0"><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--faint);font-size:.8rem;">✕</button>';l.appendChild(d);d.querySelector('input').focus();}
+function addPackRow(){var l=document.getElementById('pack-list');if(!l)return;var d=document.createElement('div');d.style.cssText='display:flex;gap:.4rem;align-items:center;padding:.22rem 0;border-bottom:1px solid var(--line);';d.innerHTML='<div style="width:14px;height:14px;border:1.5px solid var(--faint);border-radius:3px;cursor:pointer;flex-shrink:0;" onclick="this.style.background=this.style.background?\'\':\'var(--teal)\';this.style.borderColor=\'var(--teal)\';"></div><input style="flex:1;border:none;outline:none;background:transparent;font-family:Lora,serif;font-size:.82rem;color:var(--ink);" placeholder="Item to pack..."><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--faint);font-size:.8rem;">✕</button>';l.appendChild(d);d.querySelector('input').focus();}
+function addProjRow(){var l=document.getElementById('proj-list');if(!l)return;var d=document.createElement('div');d.style.cssText='display:flex;gap:.4rem;align-items:center;padding:.26rem 0;border-bottom:1px solid var(--line);';d.innerHTML='<select style="border:none;background:transparent;font-family:JetBrains Mono,monospace;font-size:.55rem;outline:none;cursor:pointer;color:var(--muted);"><option value="todo">📋 Todo</option><option value="doing">⚡ Doing</option><option value="done">✅ Done</option></select><input style="flex:1;border:none;outline:none;background:transparent;font-family:Lora,serif;font-size:.82rem;color:var(--ink);" placeholder="Task / milestone..."><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--faint);font-size:.8rem;">✕</button>';l.appendChild(d);d.querySelector('input').focus();}
+function addRelRow(){var l=document.getElementById('rel-list');if(!l)return;var d=document.createElement('div');d.style.cssText='display:flex;gap:.4rem;align-items:center;padding:.24rem 0;border-bottom:1px solid var(--line);';d.innerHTML='<span>❤️</span><input style="flex:1;border:none;outline:none;background:transparent;font-family:Lora,serif;font-size:.82rem;color:var(--ink);" placeholder="Person name..."><input style="width:110px;border:none;border-bottom:1.5px solid var(--line);outline:none;font-family:Lora,serif;font-size:.76rem;font-style:italic;background:transparent;color:var(--ink);" placeholder="Reason / note..."><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:var(--faint);font-size:.8rem;">✕</button>';l.appendChild(d);d.querySelector('input').focus();}
+function setSleepQ(n,btn){document.querySelectorAll('.sleep-q-btn').forEach(function(b){b.style.background='var(--cream)';b.style.borderColor='var(--line)';b.style.color='var(--muted)';});btn.style.background='var(--accent)';btn.style.borderColor='var(--accent)';btn.style.color='#fff';}
+
 var ALL_SECS=[
   {sid:'s-goals',  name:'Monthly Goals',   icon:'🎯', desc:'Goals that persist all month'},
   {sid:'s-top3',   name:'Top 3 Priorities',icon:'🏆', desc:'Must/Should/Could priorities'},
@@ -2688,6 +2804,16 @@ var ALL_SECS=[
   {sid:'s-mood',   name:'Mood Journal',     icon:'🧠', desc:'Track emotional patterns',extra:true},
   {sid:'s-reading',name:'Reading Log',      icon:'📖', desc:'Books & insights',extra:true},
   {sid:'s-emi',    name:'EMI & Investments', icon:'💳', desc:'EMIs, SIPs & payments due',extra:true},
+  {sid:'s-finance',  name:'Finance Tracker',   icon:'📊', desc:'Income, savings & expenses overview',extra:true},
+  {sid:'s-health',   name:'Health Log',         icon:'🏥', desc:'Doctor visits, meds, symptoms',extra:true},
+  {sid:'s-travel',   name:'Travel Planner',     icon:'✈️',  desc:'Trips, packing lists, itinerary',extra:true},
+  {sid:'s-career',   name:'Career & Work',      icon:'💼', desc:'Goals, wins, reviews, skills',extra:true},
+  {sid:'s-gratitude',name:'Gratitude',           icon:'🙏', desc:'3 things you are grateful for',extra:true},
+  {sid:'s-project',  name:'Project Tracker',    icon:'🗂️',  desc:'Tasks, milestones, deadlines',extra:true},
+  {sid:'s-learning', name:'Learning Log',        icon:'🎓', desc:'Courses, skills, key insights',extra:true},
+  {sid:'s-sleep',    name:'Sleep Journal',       icon:'😴', desc:'Sleep quality, dreams, notes',extra:true},
+  {sid:'s-relationships',name:'Relationships',  icon:'❤️',  desc:'People to reach out, notes',extra:true},
+  {sid:'s-affirmations',name:'Affirmations',    icon:'⭐', desc:'Daily affirmations & mantras',extra:true},
 ];
 var EXTRA_BODY={
   's-exercise':'<div id="ex-list"></div><button class="add-line" onclick="addExRow()">+ add exercise</button>',
@@ -3309,7 +3435,41 @@ function buildWeeklyReview(){
 }
 
 /* ── export ── */
-function exportJSON(){var all={version:1,exported:new Date().toISOString(),days:{},plain:{}};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!k)continue;if(k.indexOf('diary_day_')===0)all.days[k.replace('diary_day_','')]=JSON.parse(localStorage.getItem(k)||'null');if(k.indexOf('plain_entry_')===0)all.plain[k.replace('plain_entry_','')]=localStorage.getItem(k);}var blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='amans-diary-'+NOW.toISOString().slice(0,10)+'.json';a.click();showToast('Backup downloaded!');}
+function exportJSON(){
+  showToast('Preparing export...');
+  var all={version:2,exported:new Date().toISOString(),user:_currentUser?(_currentUser.displayName||_currentUser.email||'offline'):'offline',days:{},plain:{}};
+  /* Local cache */
+  for(var i=0;i<localStorage.length;i++){
+    var k=localStorage.key(i);if(!k)continue;
+    if(k.indexOf('diary_day_')===0)all.days[k.replace('diary_day_','')]=JSON.parse(localStorage.getItem(k)||'null');
+    if(k.indexOf('plain_entry_')===0)all.plain[k.replace('plain_entry_','')]=localStorage.getItem(k);
+  }
+  /* Also fetch ALL days from Firebase for complete backup */
+  if(_currentUser&&_currentUser.uid!=='offline'&&_fbDb){
+    _fbDb.collection('users').doc(_currentUser.uid).collection('days').get()
+      .then(function(snap){
+        snap.forEach(function(doc){
+          if(!all.days[doc.id])all.days[doc.id]=doc.data();
+        });
+        /* Also get journal entries */
+        return _fbDb.collection('users').doc(_currentUser.uid).collection('journal').get();
+      })
+      .then(function(snap){
+        if(snap)snap.forEach(function(doc){all.plain[doc.id]=doc.data().content||'';});
+        _doExportDownload(all);
+      })
+      .catch(function(){_doExportDownload(all);});
+  } else {
+    _doExportDownload(all);
+  }
+}
+function _doExportDownload(all){
+  var name=(_currentUser&&(_currentUser._profile&&_currentUser._profile.name||_currentUser.displayName)||'diary');
+  var fname='dastavez-'+name.replace(/\s+/g,'-').toLowerCase()+'-'+NOW.toISOString().slice(0,10)+'.json';
+  var blob=new Blob([JSON.stringify(all,null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();
+  showToast('\u2193 Full backup downloaded ('+Object.keys(all.days).length+' days)');
+}
 function exportPlainText(){var keys=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf('plain_entry_')===0)keys.push(k);}keys.sort();var lines=[];keys.forEach(function(k){var d=k.replace('plain_entry_','');var txt=(localStorage.getItem(k)||'').replace(/<[^>]*>/g,'');lines.push('═══ '+new Date(d).toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' ═══');lines.push(txt);lines.push('');});var blob=new Blob([lines.join('\n')],{type:'text/plain'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='diary-entries.txt';a.click();showToast('Exported!');}
 function printToday(){var d=collectDay();var w=window.open('','_blank');if(!w)return;w.document.write('<html><head><title>Diary - '+NOW.toLocaleDateString()+'</title><style>body{font-family:Georgia,serif;max-width:680px;margin:2rem auto;color:#1a1208;line-height:1.8;}h1{font-size:1.7rem;border-bottom:2px solid #e8dcd0;padding-bottom:.5rem;}h2{font-size:1.05rem;color:#6b4c2a;margin:1rem 0 .35rem;}</style></head><body>');w.document.write('<h1>✦ '+NOW.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'</h1>');if(d.intention)w.document.write('<p><em>'+escH(d.intention)+'</em></p>');if(d.tasks&&d.tasks.length){w.document.write('<h2>Tasks</h2><ul>');d.tasks.forEach(function(t){if(t.text)w.document.write('<li>'+(t.done?'✓ ':'○ ')+escH(t.text)+'</li>');});w.document.write('</ul>');}w.document.write('</body></html>');w.document.close();w.print();}
 function restoreBackup(input){var file=input.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(e){try{var data=JSON.parse(e.target.result);Object.keys(data.days||{}).forEach(function(k){save('diary_day_'+k,data.days[k]);});Object.keys(data.plain||{}).forEach(function(k){localStorage.setItem('plain_entry_'+k,data.plain[k]);});showToast('Restored! Reloading...');setTimeout(function(){location.reload();},1200);}catch(ex){showToast('Invalid backup file');}};reader.readAsText(file);}
@@ -3808,7 +3968,7 @@ document.addEventListener('click',function(){resetVaultLockTimer();});
 
 /* ── Start Firebase Auth ── */
 initFirebaseAndAuth();
-var savedViewDate=load('_viewDate',NOW.toISOString().slice(0,10));
+var savedViewDate=NOW.toISOString().slice(0,10); /* always start on today */
 _viewDate=savedViewDate;
 updateViewingDate(savedViewDate);
 
