@@ -3,8 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Aman's Diary ✨</title>
+<title>Dastavez ✦</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Dancing+Script:wght@400;600&family=Caveat:wght@400;600&family=Satisfy&family=Pacifico&display=swap" rel="stylesheet">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -66,7 +71,7 @@ body{display:flex;flex-direction:column;overflow:hidden;}
 .col{background:var(--page);flex-shrink:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent;display:flex;flex-direction:column;transition:background .4s;}
 .col::-webkit-scrollbar{width:3px;}
 .col::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
-#lcol{width:270px;border-right:1.5px solid var(--line);display:flex;flex-direction:column;overflow:hidden;background:var(--page);}
+#lcol{width:270px;border-right:1.5px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;background:var(--page);}
 #ccol{flex:1;min-width:220px;display:flex;flex-direction:column;overflow:hidden;border-right:1.5px solid var(--line);}
 #rcol{width:310px;display:flex;flex-direction:column;overflow:hidden;background:var(--page);}
 .col-div{width:4px;background:var(--line);cursor:ew-resize;flex-shrink:0;transition:background .15s;}
@@ -150,8 +155,10 @@ body{display:flex;flex-direction:column;overflow:hidden;}
 .hdl{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.42rem;color:var(--muted);font-weight:500;}
 .hdl.td{color:var(--accent);font-weight:700;}
 .hab-rows{display:flex;flex-direction:column;}
-.hab-row{display:flex;align-items:center;gap:.4rem;padding:.26rem .52rem;border-bottom:1px solid var(--line);}
+.hab-row{display:flex;align-items:center;gap:.4rem;padding:.26rem .52rem;border-bottom:1px solid var(--line);flex-wrap:nowrap;}
 .hab-row:last-child{border-bottom:none;}
+.hab-dots{display:flex;gap:.18rem;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.hab-dots::-webkit-scrollbar{display:none;}
 .hab-inp{flex:1;border:none;outline:none;background:transparent;font-family:'Lora',serif;font-size:.8rem;color:var(--ink);}
 .hab-dots{display:flex;gap:.2rem;flex-shrink:0;}
 .hday{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--faint);background:var(--page);cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.42rem;font-weight:600;color:var(--faint);transition:all .18s;flex-shrink:0;}
@@ -545,16 +552,124 @@ mark.hl-anim{background-repeat:no-repeat;background-position:left center;animati
   html,body{height:100%;overflow:hidden;}
   .date-strip{position:static !important;box-shadow:none;top:auto !important;}
   .app{display:flex !important;position:static !important;overflow:hidden;flex:1;top:auto !important;bottom:auto !important;left:auto !important;right:auto !important;}
-  #lcol{display:flex !important;flex-direction:column;overflow:hidden;width:270px !important;flex-shrink:0;position:static !important;}
-  #ccol{display:flex !important;flex-direction:column;overflow:hidden;flex:1 !important;min-width:220px;position:static !important;width:auto !important;}
-  #rcol{display:flex !important;flex-direction:column;overflow:hidden;width:310px !important;flex-shrink:0;position:static !important;}
-  .col-div{display:block;}
+  #lcol{display:flex !important;flex-direction:column;overflow:hidden;width:270px;flex-shrink:0;position:static !important;min-width:180px;}
+  #ccol{display:flex !important;flex-direction:column;overflow:hidden;flex:1 !important;min-width:240px;position:static !important;width:auto !important;}
+  #rcol{display:flex !important;flex-direction:column;overflow:hidden;width:310px;flex-shrink:0;position:static !important;min-width:200px;}
+  .col-div{display:block !important;width:4px;cursor:ew-resize;background:var(--line);flex-shrink:0;}
+  .col-div:hover,.col-div.active{background:var(--accent);}
   .mobnav{display:none !important;}
   .cover{display:flex !important;}
   .mob-save-btn{display:none !important;}
   .quick-capture-btn{bottom:1.5rem !important;right:1.5rem !important;}
 }
-/* ── paper full-width lines ── */#pd-scroll{flex:1;overflow-y:auto;position:relative;background:var(--page);}.pd-paper{position:relative;}/* red margin line running full height */#pd-marginline{position:absolute;left:50px;top:0;bottom:0;width:1.5px;background:rgba(220,50,50,.18);pointer-events:none;z-index:1;}/* ── mobile: same line alignment ── */@media(max-width:700px){  .pd-paper{padding:0 1rem 0 54px;}  #pd-marginline{left:44px;}  .pd-marginnums{width:38px;}}/* ── WATER single tumbler ── */.water-week{padding:0;border-bottom:1px solid var(--line);}.water-ctrl{display:flex;align-items:center;gap:.44rem;padding:.3rem .56rem;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);}.wt-sel{font-family:'JetBrains Mono',monospace;font-size:.62rem;border:1.5px solid var(--line);border-radius:6px;padding:.1rem .22rem;background:var(--page);cursor:pointer;outline:none;color:var(--accent);}.water-stat{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;padding:.22rem .56rem;border-bottom:1px solid var(--line);transition:color .3s,background .3s;}/* ── pd-chip pointer fix ── */.pd-chip{display:inline-flex;align-items:center;gap:.25rem;background:var(--cream2);border:1.5px solid var(--line);border-radius:7px;padding:.18rem .44rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--soft);cursor:pointer;transition:all .15s;vertical-align:middle;user-select:none;margin:0 .12rem;pointer-events:auto !important;position:relative;z-index:2;}.pd-chip:hover{border-color:var(--accent);background:var(--cream);box-shadow:0 2px 8px rgba(0,0,0,.1);}.pd-chip-name{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}/* ── lightbox ── */@keyframes lbIn{from{opacity:0}to{opacity:1}}
+/* ── paper full-width lines ── */#pd-scroll{flex:1;overflow-y:auto;position:relative;background:var(--page);}.pd-paper{position:relative;}/* red margin line running full height */#pd-marginline{position:absolute;left:50px;top:0;bottom:0;width:1.5px;background:rgba(220,50,50,.18);pointer-events:none;z-index:1;}/* ── mobile: same line alignment ── */@media(max-width:700px){  .pd-paper{padding:0 1rem 0 54px;}  #pd-marginline{left:44px;}  .pd-marginnums{width:38px;}}/* ── WATER single tumbler ── */.water-week{padding:0;border-bottom:1px solid var(--line);}.water-ctrl{display:flex;align-items:center;gap:.44rem;padding:.3rem .56rem;border-bottom:1px solid var(--line);font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);}.wt-sel{font-family:'JetBrains Mono',monospace;font-size:.62rem;border:1.5px solid var(--line);border-radius:6px;padding:.1rem .22rem;background:var(--page);cursor:pointer;outline:none;color:var(--accent);}.water-stat{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;padding:.22rem .56rem;border-bottom:1px solid var(--line);transition:color .3s,background .3s;}/* ── pd-chip pointer fix ── */.pd-chip{display:inline-flex;align-items:center;gap:.25rem;background:var(--cream2);border:1.5px solid var(--line);border-radius:7px;padding:.18rem .44rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--soft);cursor:pointer;transition:all .15s;vertical-align:middle;user-select:none;margin:0 .12rem;pointer-events:auto !important;position:relative;z-index:2;}.pd-chip:hover{border-color:var(--accent);background:var(--cream);box-shadow:0 2px 8px rgba(0,0,0,.1);}.pd-chip-name{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ── AUTH OVERLAY ── */
+#auth-overlay{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:1rem;transition:opacity .4s;}
+#auth-overlay.hidden{opacity:0;pointer-events:none;}
+.auth-card{background:var(--page);border-radius:24px;padding:2rem 2.2rem;width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,.4);border:1px solid var(--line);}
+.auth-logo{text-align:center;font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);margin-bottom:.2rem;}
+.auth-sub{text-align:center;font-family:'Lora',serif;font-style:italic;font-size:.8rem;color:var(--muted);margin-bottom:1.6rem;}
+.auth-tabs{display:flex;background:var(--cream2);border-radius:12px;padding:.18rem;margin-bottom:1.4rem;gap:.2rem;}
+.auth-tab{flex:1;padding:.46rem;border:none;background:transparent;border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;color:var(--muted);transition:all .18s;}
+.auth-tab.active{background:var(--page);color:var(--accent);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.auth-field{margin-bottom:.9rem;}
+.auth-field label{display:block;font-family:'JetBrains Mono',monospace;font-size:.55rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.32rem;}
+.auth-field input{width:100%;padding:.6rem .8rem;border:1.5px solid var(--line);border-radius:10px;font-family:'Lora',serif;font-size:.9rem;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;}
+.auth-field input:focus{border-color:var(--accent);}
+.auth-btn{width:100%;padding:.65rem;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;margin-top:.3rem;transition:opacity .15s;}
+.auth-btn:hover{opacity:.88;}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;}
+.auth-err{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--rose);margin-top:.5rem;text-align:center;min-height:1.2em;}
+.auth-link{font-family:'Lora',serif;font-size:.72rem;color:var(--muted);text-align:center;margin-top:.8rem;cursor:pointer;}
+.auth-link span{color:var(--accent);text-decoration:underline;}
+/* ── OTP VAULT MODAL ── */
+#vault-otp-overlay{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.7);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:1rem;}
+#vault-otp-overlay.hidden{display:none;}
+.otp-card{background:var(--page);border-radius:22px;padding:1.8rem 2rem;width:100%;max-width:360px;box-shadow:0 24px 60px rgba(0,0,0,.4);text-align:center;}
+.otp-icon{font-size:2.4rem;margin-bottom:.6rem;}
+.otp-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);margin-bottom:.3rem;}
+.otp-desc{font-family:'Lora',serif;font-style:italic;font-size:.76rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.5;}
+.otp-inputs{display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;}
+.otp-inp{width:44px;height:52px;border:2px solid var(--line);border-radius:10px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--ink);background:var(--cream);outline:none;transition:border-color .15s;}
+.otp-inp:focus{border-color:var(--accent);}
+.otp-err{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--rose);margin:.4rem 0;}
+/* ── DATE STRIP LAYOUT ── */
+.ds-top-row{display:flex;align-items:center;justify-content:space-between;width:100%;gap:.5rem;}
+/* ── DATE NAV ── */
+.date-nav{display:flex;align-items:center;gap:.4rem;flex-shrink:0;}
+.date-nav-btn{background:none;border:1.5px solid var(--line);border-radius:8px;padding:.22rem .5rem;cursor:pointer;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.7rem;transition:all .15s;}
+.date-nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.date-nav-btn.today-btn{background:var(--accent);color:#fff;border-color:var(--accent);}
+.viewing-date{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--accent);font-weight:700;white-space:nowrap;}
+.sync-text-lbl{font-size:.5rem;}
+@media(max-width:700px){
+  .date-strip{flex-direction:column;gap:.3rem;align-items:stretch !important;padding:.4rem .8rem !important;}
+  .ds-top-row{gap:.4rem;}
+  .date-greet{font-size:.72rem !important;}
+  .sync-text-lbl{display:none;}
+  .date-nav{justify-content:flex-start;}
+}
+/* ── FOCUS MODE improved ── */
+body.focus-mode #lcol,body.focus-mode #rcol,body.focus-mode .col-div{display:none!important;}
+body.focus-mode .cover{display:none!important;}
+body.focus-mode #ccol{flex:1!important;max-width:800px;margin:0 auto;border:none!important;background:var(--page);}
+body.focus-mode .pd-editor{font-size:1.2rem!important;line-height:2!important;}
+body.focus-mode .app{justify-content:center;background:var(--bg);}
+body.focus-mode .pd-toolbar{opacity:.3;transition:opacity .3s;}
+body.focus-mode .pd-toolbar:hover{opacity:1;}
+body.focus-mode #focus-mode-btn{background:var(--accent);color:#fff;border-color:var(--accent);}
+.focus-overlay{display:none;position:fixed;top:0;left:0;right:0;padding:.5rem 1rem;background:linear-gradient(to bottom,rgba(0,0,0,.5),transparent);z-index:50;align-items:center;justify-content:space-between;}
+body.focus-mode .focus-overlay{display:flex;}
+.focus-word-count{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.7);}
+.focus-time{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.8);font-weight:700;}
+/* ── CLOUD SYNC indicator ── */
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;margin-right:.3rem;transition:background .3s;}
+.sync-dot.syncing{animation:syncPulse 1s ease-in-out infinite;}
+.sync-dot.error{background:var(--rose);}
+@keyframes syncPulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-status{font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--muted);display:flex;align-items:center;}
+/* ── UPCOMING MEETINGS ── */
+.upcoming-badge{background:var(--amber-l);color:var(--amber);border:1px solid var(--amber);border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:.52rem;padding:.1rem .4rem;font-weight:700;}
+
+
+/* ── DASTAVEZ LOADER ── */
+#dastavez-loader{
+  position:fixed;inset:0;z-index:999999;
+  background:var(--bg,#2c1810);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:1rem;
+  transition:opacity .6s ease;
+}
+#dastavez-loader.fade-out{opacity:0;pointer-events:none;}
+.loader-word{
+  font-family:'Playfair Display',serif;
+  font-size:2.4rem;
+  color:rgba(255,255,255,.92);
+  text-align:center;
+  text-shadow:0 2px 20px rgba(0,0,0,.4);
+  opacity:0;
+  transform:translateY(10px);
+  transition:opacity .35s ease, transform .35s ease;
+  min-height:3rem;
+  letter-spacing:.03em;
+}
+.loader-word.show{opacity:1;transform:none;}
+.loader-sub{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.62rem;
+  color:rgba(255,255,255,.4);
+  letter-spacing:.2em;
+  text-transform:uppercase;
+}
+.loader-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(255,255,255,.3);
+  animation:loaderPulse 1.2s ease-in-out infinite;
+}
+@keyframes loaderPulse{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.4);opacity:1}}
+
+/* ── lightbox ── */@keyframes lbIn{from{opacity:0}to{opacity:1}}
 /* ── Glassmorphism modals ── */
 .modal-bg{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(0,0,0,.55);}
 .modal-box{background:rgba(var(--page-rgb,255,254,249),.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.25);box-shadow:0 32px 80px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.3);}
@@ -631,6 +746,76 @@ body.focus-mode .app{justify-content:center;}
   @keyframes modalSlideUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
 }
 </style>
+
+<!-- ══ DASTAVEZ LOADER (shown once per session) ══ -->
+<div id="dastavez-loader">
+  <div class="loader-word" id="loader-word">Dastavez</div>
+  <div class="loader-sub">Your Personal Diary</div>
+  <div class="loader-dot"></div>
+</div>
+<div id="pull-save-bar">&#8595; Pull down to save</div>
+
+<!-- ══ AUTH OVERLAY ══ -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">✦ Dastavez</div>
+    <div class="auth-sub" id="auth-sub-text">Your personal journal & planner</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Register</button>
+    </div>
+    <div id="auth-login-form">
+      <div class="auth-field"><label>Email</label><input type="email" id="auth-email" placeholder="your@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')authSignIn()"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="auth-btn" onclick="authSignIn()">Sign In →</button>
+      <div class="auth-err" id="auth-err"></div>
+    </div>
+    <div id="auth-register-form" style="display:none">
+      <div class="auth-field"><label>Your Name</label><input type="text" id="reg-name" placeholder="Your full name"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="auth-field"><label>Password</label><input type="password" id="reg-pass" placeholder="Min 6 characters" autocomplete="new-password"></div>
+      <div class="auth-field"><label>Phone (for Vault OTP)</label>
+        <input type="tel" id="reg-phone" placeholder="+91 98765 43210">
+        <div id="recaptcha-container"></div>
+      </div>
+      <button class="auth-btn" onclick="authRegister()">Create Account →</button>
+      <div class="auth-err" id="reg-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OTP VAULT OVERLAY ══ -->
+<div id="vault-otp-overlay" class="hidden">
+  <div class="otp-card">
+    <div class="otp-icon">🔒</div>
+    <div class="otp-title">Vault OTP</div>
+    <div class="otp-desc" id="otp-desc">Enter the 6-digit OTP sent to your registered phone number.</div>
+    <div id="otp-send-section">
+      <button class="auth-btn" onclick="sendVaultOTP()" style="margin-bottom:.8rem;">Send OTP →</button>
+    </div>
+    <div id="otp-verify-section" style="display:none">
+      <div class="otp-inputs">
+        <input class="otp-inp" maxlength="1" oninput="otpNext(this,0)" onkeydown="otpBack(event,0)" id="otp0">
+        <input class="otp-inp" maxlength="1" oninput="otpNext(this,1)" onkeydown="otpBack(event,1)" id="otp1">
+        <input class="otp-inp" maxlength="1" oninput="otpNext(this,2)" onkeydown="otpBack(event,2)" id="otp2">
+        <input class="otp-inp" maxlength="1" oninput="otpNext(this,3)" onkeydown="otpBack(event,3)" id="otp3">
+        <input class="otp-inp" maxlength="1" oninput="otpNext(this,4)" onkeydown="otpBack(event,4)" id="otp4">
+        <input class="otp-inp" maxlength="1" oninput="otpNext(this,5)" onkeydown="otpBack(event,5)" id="otp5">
+      </div>
+      <button class="auth-btn" onclick="verifyVaultOTP()">Verify →</button>
+    </div>
+    <div class="otp-err" id="otp-err"></div>
+    <div class="auth-link" onclick="closeVaultOTP()">Cancel</div>
+    <div id="recaptcha-vault"></div>
+  </div>
+</div>
+
+<!-- Focus overlay bar -->
+<div class="focus-overlay" id="focus-overlay">
+  <div class="focus-word-count" id="focus-wc">0 words</div>
+  <div class="focus-time" id="focus-time"></div>
+  <button onclick="toggleFocusMode()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.22rem .6rem;border-radius:7px;font-family:JetBrains Mono,monospace;font-size:.58rem;cursor:pointer;">Exit Focus</button>
+</div>
 
 <!-- SLEEP MODAL -->
 <div class="modal-bg off" id="m-sleep">
@@ -728,7 +913,7 @@ body.focus-mode .app{justify-content:center;}
 <div class="cover" id="cover">
   <div class="cv-left">
     <div>
-      <div class="diary-name">&#10022; Aman's Diary</div>
+      <div class="diary-name" id="diary-name-el">&#10022; Dastavez</div>
       <div class="cover-date" id="cover-date"></div>
     </div>
     <div class="cv-vline"></div>
@@ -738,11 +923,20 @@ body.focus-mode .app{justify-content:center;}
       <option>&#128543; Stressed</option><option>&#127881; Excited</option>
     </select>
   </div>
-  <div class="cv-right"><button class="hbtn" onclick="openM('m-search');setTimeout(function(){document.getElementById('search-input').focus()},200)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="hbl">Search</span></button><button class="hbtn" onclick="openM('m-weekly');buildWeeklyReview()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="hbl">Week</span></button><button class="hbtn" onclick="openM('m-cal');buildCal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="hbl">Cal</span></button><button class="hbtn" onclick="openM('m-sections');buildSP()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg><span class="hbl">Sections</span></button><button class="hbtn" onclick="openM('m-vault');renderVault()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span class="hbl">Vault</span></button><button class="hbtn" onclick="openM('m-theme')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg><span class="hbl">Theme</span></button><button class="hbtn" onclick="openM('m-export')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="hbl">Export</span></button><button class="hbtn" onclick="openM('m-sleep')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="hbl">Sleep</span></button><button class="focus-btn" id="focus-mode-btn" onclick="toggleFocusMode()" title="Focus Mode">⊙ Focus</button><button class="hbtn save" onclick="doSave()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg><span class="hbl">Save</span></button></div>
+  <div class="cv-right"><button class="hbtn" onclick="openM('m-search');setTimeout(function(){document.getElementById('search-input').focus()},200)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="hbl">Search</span></button><button class="hbtn" onclick="openM('m-weekly');buildWeeklyReview()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span class="hbl">Week</span></button><button class="hbtn" onclick="openM('m-cal');buildCal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="hbl">Cal</span></button><button class="hbtn" onclick="openM('m-sections');buildSP()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/></svg><span class="hbl">Sections</span></button><button class="hbtn" onclick="openVaultModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span class="hbl">Vault</span></button><button class="hbtn" onclick="openM('m-theme')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg><span class="hbl">Theme</span></button><button class="hbtn" onclick="openM('m-export')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="hbl">Export</span></button><button class="hbtn" onclick="openM('m-sleep')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span class="hbl">Sleep</span></button><button class="focus-btn" id="focus-mode-btn" onclick="toggleFocusMode()" title="Focus Mode">⊙ Focus</button><span class="sync-status" style="margin-right:.4rem;"><span class="sync-dot" id="sync-dot-cover"></span><span id="sync-text-cover" style="color:rgba(255,255,255,.7);font-size:.5rem;">Synced</span></span><button class="hbtn" onclick="authSignOut()" title="Sign out" style="color:rgba(255,255,255,.8);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span class="hbl">Logout</span></button><button class="hbtn save" onclick="doSave()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg><span class="hbl">Save</span></button></div>
 </div>
 <!-- DATE STRIP -->
 <div class="date-strip" id="date-strip">
-  <div class="date-greet" id="date-greet"></div>
+  <div class="ds-top-row">
+    <div class="date-greet" id="date-greet"></div>
+    <div class="sync-status" id="sync-status" title="Cloud sync"><span class="sync-dot" id="sync-dot"></span><span id="sync-text" class="sync-text-lbl">Synced</span></div>
+  </div>
+  <div class="date-nav">
+    <button class="date-nav-btn" onclick="navDay(-1)" title="Previous day">&#8592;</button>
+    <span class="viewing-date" id="viewing-date"></span>
+    <button class="date-nav-btn" onclick="navDay(1)" title="Next day">&#8594;</button>
+    <button class="date-nav-btn today-btn" onclick="navToday()" id="today-btn" title="Today" style="display:none">Today</button>
+  </div>
   <div class="ds-right">
     <div class="e-wrap">
       <span class="e-lbl">Energy</span>
@@ -1044,7 +1238,7 @@ body.focus-mode .app{justify-content:center;}
     <button class="mob-tab" onclick="showMobTab('rcol',this)"><span class="mi">&#128336;</span><span class="ml">Planner</span></button>
     <button class="mob-tab" onclick="openM('m-sections');buildSP()"><span class="mi">&#8862;</span><span class="ml">Sections</span></button>
     <button class="mob-tab" onclick="openM('m-theme')"><span class="mi">&#127912;</span><span class="ml">Theme</span></button>
-    <button class="mob-tab" onclick="openM('m-vault');renderVault()"><span class="mi">&#128274;</span><span class="ml">Vault</span></button>
+    <button class="mob-tab" onclick="openVaultModal()"><span class="mi">&#128274;</span><span class="ml">Vault</span></button>
     <button class="mob-tab" onclick="openM('m-search');setTimeout(function(){document.getElementById('search-input').focus()},200)"><span class="mi">&#128269;</span><span class="ml">Search</span></button>
     <button class="mob-tab" onclick="openM('m-export')"><span class="mi">&#128229;</span><span class="ml">Export</span></button>
   </div>
@@ -1052,7 +1246,799 @@ body.focus-mode .app{justify-content:center;}
 <button class="qc-fab" onclick="openM('m-qc')" title="Quick capture Ctrl+K"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
 <div class="toast" id="toast"></div>
 
-<script>var _pdMedia=[];
+<script>
+var NOW=new Date(),DL=['M','T','W','T','F','S','S'],todayI=(NOW.getDay()+6)%7;
+/* ── Core vars declared early so Firebase code can reference them ── */
+/* ═══════════════════════════════════════════════════════
+   DASTAVEZ LOADER — shown once per browser session
+   ═══════════════════════════════════════════════════════ */
+(function(){
+  if(sessionStorage.getItem('_dastavez_loaded')){
+    var ldr=document.getElementById('dastavez-loader');
+    if(ldr)ldr.style.display='none';
+    return;
+  }
+  sessionStorage.setItem('_dastavez_loaded','1');
+  var words=[
+    {t:'Dastavez'},
+    {t:'\u0a26\u0a38\u0a24\u0a3e\u0a35\u0a47\u0a1c\u0a3c'},
+    {t:'\u0926\u0938\u094d\u0924\u093e\u0935\u0947\u091c\u093c'},
+    {t:'\u09a1\u0995\u09c1\u09ae\u09c7\u09a8\u09cd\u099f'},
+    {t:'\u062f\u0633\u062a\u0627\u0648\u06cc\u0632'},
+    {t:'Document'},
+    {t:'\u0414\u043d\u0435\u0432\u043d\u0438\u043a'},
+    {t:'\u65e5\u8a18'},
+    {t:'\u65e5\u8bb0'},
+    {t:'\u0921\u093e\u092f\u0930\u0940'},
+    {t:'G\u00fcnl\u00fck'},
+    {t:'Diario'},
+    {t:'Tagebuch'},
+    {t:'Di\u00e1rio'},
+    {t:'Journal'},
+    {t:'\u041e\u0449\u043e\u0434\u0435\u043d\u043d\u0438\u043a'},
+    {t:'\uc77c\uae30'},
+    {t:'\u0e44\u0e14\u0e2d\u0e32\u0e23\u0e35\u0e48'},
+    {t:'\u0645\u0630\u0643\u0631\u0627\u062a'},
+    {t:'Dastavez'},
+  ];
+  var wordEl=document.getElementById('loader-word');
+  var idx=0;
+  if(wordEl){wordEl.textContent=words[0].t;wordEl.classList.add('show');}
+  var iv=setInterval(function(){
+    idx++;
+    if(idx>=words.length){
+      clearInterval(iv);
+      setTimeout(function(){
+        var ldr=document.getElementById('dastavez-loader');
+        if(ldr){ldr.classList.add('fade-out');setTimeout(function(){ldr.style.display='none';},650);}
+      },300);
+      return;
+    }
+    if(wordEl){
+      wordEl.classList.remove('show');
+      setTimeout(function(){wordEl.textContent=words[idx].t;wordEl.classList.add('show');},180);
+    }
+  },260);
+})();
+
+
+var wData=Array(7).fill(0),wTarget=4,meetN=0,ncIdx=0,sleepFrom=0,sleepTo=23;
+var NOTE_COLORS=['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899'];
+var vaultUnlocked=false,vaultTab='passwords';
+var _vKey='';
+var _pins=[];
+var visSecs=[];
+
+/* ═══════════════════════════════════════════════════════════════════
+   FIREBASE CONFIGURATION
+   Replace these values with your own Firebase project config
+   ═══════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   FIREBASE SETUP GUIDE
+   ════════════════════════════════════════════════════════════════
+   1. Go to https://console.firebase.google.com
+   2. Create a project named "amans-diary"
+   3. Enable Authentication → Email/Password AND Phone
+   4. Enable Firestore Database
+   5. Copy your project config and replace FIREBASE_CONFIG above
+   6. Add your domain to Authentication → Authorized domains
+   ════════════════════════════════════════════════════════════════ */
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAtmdu4JKllHwJqfgwUpq1LlLRdGzJ3AeQ",
+  authDomain: "dastavez-44f61.firebaseapp.com",
+  projectId: "dastavez-44f61",
+  storageBucket: "dastavez-44f61.firebasestorage.app",
+  messagingSenderId: "1054185939883",
+  appId: "1:1054185939883:web:f631fceb7111f5f3d3e8ee",
+  measurementId: "G-V77EKDZXR4"
+};
+
+/* ── Firebase app instance (lazy init) ── */
+var _fbApp = null, _fbAuth = null, _fbDb = null;
+var _currentUser = null;
+var _viewDate = NOW.toISOString().slice(0, 10); // date currently being viewed
+
+function fbInit() {
+  if (_fbApp) return true;
+  try {
+    if (typeof firebase === 'undefined') { console.warn('Firebase not loaded'); return false; }
+    /* Prevent duplicate app init */
+    try {
+      _fbApp = firebase.app();
+    } catch(e) {
+      _fbApp = firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    _fbAuth = firebase.auth();
+    _fbDb = firebase.firestore();
+    /* Enable persistence so app works offline */
+    _fbDb.enablePersistence({synchronizeTabs:true}).catch(function(){});
+    try { if(firebase.analytics) firebase.analytics(); } catch(e){}
+    return true;
+  } catch (e) {
+    console.error('Firebase init error:', e);
+    return false;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUTH — REGISTER / SIGN IN / SIGN OUT
+   ═══════════════════════════════════════════════════════════════════ */
+function showFirebaseSetupAlert() {
+  var sub = document.getElementById('auth-sub-text');
+  if (sub) {
+    sub.innerHTML = '<span style="color:var(--rose);font-style:normal;font-size:.75rem;">' +
+      '&#9888; API key invalid. In <a href="https://console.firebase.google.com" target="_blank" ' +
+      'style="color:var(--accent);">Firebase Console</a>: ' +
+      'Enable <b>Email/Password</b> auth &amp; create <b>Firestore Database</b>. ' +
+      'Also check <b>Google Cloud Console &rarr; APIs &rarr; Identity Toolkit API</b> is enabled.' +
+      '</span>';
+  }
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-login-form').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('auth-register-form').style.display = tab === 'register' ? '' : 'none';
+  document.getElementById('auth-err').textContent = '';
+  document.getElementById('reg-err').textContent = '';
+}
+
+function authRegister() {
+  if (!fbInit()) { showToast('Firebase not configured. See setup guide.'); return; }
+  var name = (document.getElementById('reg-name').value || '').trim();
+  var email = (document.getElementById('reg-email').value || '').trim();
+  var pass = (document.getElementById('reg-pass').value || '');
+  var phone = (document.getElementById('reg-phone').value || '').trim();
+  var errEl = document.getElementById('reg-err');
+  if (!name) { errEl.textContent = 'Please enter your name'; return; }
+  if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required'; return; }
+  if (pass.length < 6) { errEl.textContent = 'Password must be 6+ characters'; return; }
+  errEl.textContent = '';
+  _fbAuth.createUserWithEmailAndPassword(email, pass)
+    .then(function(cred) {
+      return cred.user.updateProfile({ displayName: name }).then(function() {
+        /* Save user profile including phone to Firestore */
+        return _fbDb.collection('users').doc(cred.user.uid).set({
+          name: name,
+          email: email,
+          phone: phone || '',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+    })
+    .then(function() { onAuthSuccess(); })
+    .catch(function(e) {
+      if (e.code === 'auth/api-key-not-valid' || e.message.indexOf('api-key') > -1) {
+        errEl.textContent = 'Firebase not configured yet — enable Auth in Firebase Console';
+        showFirebaseSetupAlert();
+      } else if (e.code === 'auth/email-already-in-use') {
+        errEl.textContent = 'Email already registered — try Sign In';
+        switchAuthTab('login');
+      } else {
+        errEl.textContent = e.message;
+      }
+    });
+}
+
+function authSignIn() {
+  if (!fbInit()) { /* Offline mode */ onOfflineMode(); return; }
+  var email = (document.getElementById('auth-email').value || '').trim();
+  var pass = (document.getElementById('auth-pass').value || '');
+  var errEl = document.getElementById('auth-err');
+  if (!email || !pass) { errEl.textContent = 'Email and password required'; return; }
+  errEl.textContent = '';
+  _fbAuth.signInWithEmailAndPassword(email, pass)
+    .then(function() { /* onAuthStateChanged handles rest */ })
+    .catch(function(e) {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+        errEl.textContent = 'Incorrect email or password';
+      } else if (e.code === 'auth/api-key-not-valid' || e.message.indexOf('api-key') > -1) {
+        errEl.textContent = 'Firebase setup needed — see instructions below';
+        showFirebaseSetupAlert();
+      } else if (e.code === 'auth/network-request-failed') {
+        errEl.textContent = 'No internet connection';
+      } else {
+        errEl.textContent = e.message;
+      }
+    });
+}
+
+function authSignOut() {
+  if (_fbAuth) {
+    _fbAuth.signOut().then(function() {
+      _currentUser = null;
+      showAuthOverlay();
+      showToast('Signed out');
+    });
+  }
+}
+
+function onOfflineMode() {
+  /* Allow using the app offline without Firebase */
+  _currentUser = { uid: 'offline', displayName: 'You', email: '', phone: '' };
+  hideAuthOverlay();
+  refreshDiaryTitle();
+  showToast('Running in offline mode — data saved locally');
+}
+
+function onAuthSuccess() {
+  /* Called after successful sign-in */
+  _fbAuth.onAuthStateChanged(function(user) {
+    if (user) {
+      _currentUser = user;
+      /* Load display name from Firestore */
+      _fbDb.collection('users').doc(user.uid).get().then(function(doc) {
+        if (doc.exists) {
+          _currentUser._profile = doc.data();
+          var nameEl = document.getElementById('diary-name-el');
+          if (nameEl) nameEl.textContent = '\u2736 ' + doc.data().name + '\'s Diary';
+        }
+      });
+      hideAuthOverlay();
+      refreshDiaryTitle();
+      loadDayFromCloud(_viewDate);
+    }
+  });
+}
+
+function showAuthOverlay() {
+  var ov = document.getElementById('auth-overlay');
+  if (ov) { ov.style.display = 'flex'; ov.classList.remove('hidden'); }
+}
+
+function refreshDiaryTitle() {
+  var nameEl = document.getElementById('diary-name-el');
+  if (!nameEl) return;
+  /* Try multiple sources for the name */
+  var name = '';
+  if (_currentUser) {
+    if (_currentUser._profile && _currentUser._profile.name) name = _currentUser._profile.name;
+    else if (_currentUser.displayName) name = _currentUser.displayName;
+  }
+  var firstName = name ? name.trim().split(' ')[0] : '';
+  if (firstName) {
+    var title = firstName + "’s Diary";
+    nameEl.textContent = '✶ ' + title;
+    document.title = 'Dastavez — ' + title;
+    /* Also update mobile greeting */
+    var greet = document.getElementById('date-greet');
+    if (greet && greet.textContent.indexOf('Dastavez') > -1) {
+      var hr = new Date().getHours();
+      var g = hr<5?'Good night':hr<12?'Good morning':hr<17?'Good afternoon':hr<21?'Good evening':'Good night';
+      greet.textContent = g + ', ' + firstName + ' — make today count.';
+    }
+  } else {
+    nameEl.textContent = '✶ Dastavez';
+  }
+}
+function hideAuthOverlay() {
+  var ov = document.getElementById('auth-overlay');
+  if (ov) { ov.classList.add('hidden'); setTimeout(function() { ov.style.display = 'none'; }, 400); }
+}
+
+/* ── Auth state listener ── */
+function startAuthListener() {
+  if (!fbInit()) { onOfflineMode(); return; }
+  _fbAuth.onAuthStateChanged(function(user) {
+    if (user) {
+      _currentUser = user;
+      _fbDb.collection('users').doc(user.uid).get().then(function(doc) {
+        if (doc.exists) {
+          _currentUser._profile = doc.data();
+          var nameEl = document.getElementById('diary-name-el');
+          if (nameEl) nameEl.textContent = '\u2736 ' + doc.data().name + '\'s Diary';
+        }
+      });
+      hideAuthOverlay();
+      refreshDiaryTitle();
+      loadDayFromCloud(_viewDate);
+    } else {
+      showAuthOverlay();
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FIRESTORE — SAVE & LOAD DAY DATA
+   ═══════════════════════════════════════════════════════════════════ */
+function setSyncStatus(state) {
+  /* state: 'synced' | 'syncing' | 'error' | 'offline' */
+  var dot = document.getElementById('sync-dot');
+  var txt = document.getElementById('sync-text');
+  var dotC = document.getElementById('sync-dot-cover');
+  var txtC = document.getElementById('sync-text-cover');
+  var map = {
+    synced:  { cls: '',       color: 'var(--teal)', label: 'Synced' },
+    syncing: { cls: 'syncing',color: 'var(--teal)', label: 'Syncing...' },
+    error:   { cls: 'error',  color: 'var(--rose)', label: 'Sync error' },
+    offline: { cls: '',       color: 'var(--muted)', label: 'Offline' }
+  };
+  var s = map[state] || map.synced;
+  [dot, dotC].forEach(function(d) {
+    if (d) { d.className = 'sync-dot ' + s.cls; d.style.background = s.color; }
+  });
+  [txt, txtC].forEach(function(t) { if (t) t.textContent = s.label; });
+}
+
+function saveToCloud(dateStr, data) {
+  if (!_currentUser || _currentUser.uid === 'offline') { save('diary_day_' + dateStr, data); return; }
+  if (!_fbDb) return;
+  setSyncStatus('syncing');
+  _fbDb.collection('users').doc(_currentUser.uid)
+    .collection('days').doc(dateStr)
+    .set(data)
+    .then(function() { setSyncStatus('synced'); })
+    .catch(function(e) {
+      console.error('Cloud save error:', e);
+      setSyncStatus('error');
+      save('diary_day_' + dateStr, data); /* fallback local */
+    });
+}
+
+function loadDayFromCloud(dateStr) {
+  save('_viewDate', dateStr); /* persist view date */
+  updateViewingDate(dateStr);
+  if (!_currentUser || _currentUser.uid === 'offline') {
+    restoreDayData(dateStr);
+    return;
+  }
+  if (!_fbDb) { restoreDayData(dateStr); return; }
+  setSyncStatus('syncing');
+  _fbDb.collection('users').doc(_currentUser.uid)
+    .collection('days').doc(dateStr)
+    .get()
+    .then(function(doc) {
+      setSyncStatus('synced');
+      var data = doc.exists ? doc.data() : null;
+      if (data) {
+        save('diary_day_' + dateStr, data); /* cache locally */
+        restoreDayData(dateStr, data);
+      } else {
+        clearDayUI();
+        /* Still try local cache */
+        restoreDayData(dateStr);
+      }
+    })
+    .catch(function(e) {
+      console.error('Cloud load error:', e);
+      setSyncStatus('error');
+      restoreDayData(dateStr); /* fallback local */
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DATE NAVIGATION — VIEW ANY DAY
+   ═══════════════════════════════════════════════════════════════════ */
+function updateViewingDate(dateStr) {
+  _viewDate = dateStr;
+  var el = document.getElementById('viewing-date');
+  var todayStr = NOW.toISOString().slice(0, 10);
+  var isToday = dateStr === todayStr;
+  var d = new Date(dateStr + 'T12:00:00');
+  var label = isToday ? 'Today' :
+    d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  if (el) el.textContent = label;
+  var todayBtn = document.getElementById('today-btn');
+  if (todayBtn) todayBtn.style.display = isToday ? 'none' : '';
+  /* Dim UI if viewing past/future */
+  var app = document.getElementById('app');
+  if (app) app.style.opacity = isToday ? '1' : '0.88';
+  /* Update greet text */
+  var greet = document.getElementById('date-greet');
+  if (greet) {
+    if (isToday) {
+      var hr = NOW.getHours();
+      var g = hr < 5 ? 'Good night' : hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : hr < 21 ? 'Good evening' : 'Good night';
+      greet.textContent = g + (_currentUser && _currentUser.displayName ? ', ' + _currentUser.displayName.split(' ')[0] + ' \u2014' : ' \u2014') + ' make today count.';
+    } else {
+      greet.textContent = '\uD83D\uDCC6 ' + d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+  }
+}
+
+function navDay(dir) {
+  /* Save current day first */
+  var todayStr = NOW.toISOString().slice(0, 10);
+  if (_viewDate === todayStr) autoSaveDay();
+  /* Move to target date */
+  var d = new Date(_viewDate + 'T12:00:00');
+  d.setDate(d.getDate() + dir);
+  var newDate = d.toISOString().slice(0, 10);
+  loadDayFromCloud(newDate);
+}
+
+function navToday() {
+  var todayStr = NOW.toISOString().slice(0, 10);
+  loadDayFromCloud(todayStr);
+}
+
+function clearDayUI() {
+  /* Clear all editable fields for a blank day */
+  var it = document.getElementById('intention-ta');
+  if (it) { it.value = ''; autoR(it); }
+  document.querySelectorAll('.t3t').forEach(function(t) { t.value = ''; autoR(t); });
+  var tl = document.getElementById('task-list');
+  if (tl) tl.innerHTML = '';
+  var ml = document.getElementById('meet-list');
+  if (ml) ml.innerHTML = '';
+  var el = document.getElementById('emi-list');
+  if (el) el.innerHTML = '';
+  var nl = document.getElementById('notes-list');
+  if (nl) nl.innerHTML = '';
+  document.querySelectorAll('.r-ta').forEach(function(t) { t.value = ''; });
+  var ft = document.querySelector('.free-ta');
+  if (ft) ft.value = '';
+  document.querySelectorAll('.dlem').forEach(function(e) { e.classList.remove('picked'); });
+  document.querySelectorAll('.dlstr').forEach(function(s) { s.classList.remove('on'); });
+  document.querySelectorAll('.tslot .tinp').forEach(function(t) { t.value = ''; autoR(t); });
+  updBadge();
+}
+
+/* Override autoSaveDay to save to cloud */
+var _origAutoSaveDay = null;
+function autoSaveDay() {
+  var d = collectDay();
+  var todayStr = NOW.toISOString().slice(0, 10);
+  /* Always save today's data */
+  save('diary_day_' + todayStr, d);
+  /* If viewing today, also push to cloud */
+  if (_viewDate === todayStr) saveToCloud(todayStr, d);
+}
+
+/* Override doSave to also cloud-sync */
+function doSave() {
+  autoSaveDay();
+  _pdSave();
+  showToast('\u2736 Diary saved!');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VAULT — OTP via Firebase Phone Auth
+   ═══════════════════════════════════════════════════════════════════ */
+var _otpConfirmResult = null;
+var _otpRecaptchaVerifier = null;
+
+function openVaultWithOTP() {
+  /* Show OTP overlay instead of PIN */
+  if (!_currentUser || _currentUser.uid === 'offline') {
+    /* Offline fallback — use legacy PIN */
+    renderVault();
+    openM('m-vault');
+    return;
+  }
+  /* Check if user has phone */
+  var phone = (_currentUser._profile && _currentUser._profile.phone) ? _currentUser._profile.phone : '';
+  if (!phone) {
+    showToast('No phone number on account. Add one in settings.');
+    renderVault(); openM('m-vault');
+    return;
+  }
+  var ov = document.getElementById('vault-otp-overlay');
+  var desc = document.getElementById('otp-desc');
+  if (desc) desc.textContent = 'We will send an OTP to ' + maskPhone(phone);
+  if (ov) ov.classList.remove('hidden');
+  document.getElementById('otp-send-section').style.display = '';
+  document.getElementById('otp-verify-section').style.display = 'none';
+  document.getElementById('otp-err').textContent = '';
+  /* Clear OTP inputs */
+  for (var i = 0; i < 6; i++) {
+    var inp = document.getElementById('otp' + i);
+    if (inp) inp.value = '';
+  }
+}
+
+function maskPhone(phone) {
+  if (!phone) return '****';
+  return phone.slice(0, 3) + '****' + phone.slice(-3);
+}
+
+function sendVaultOTP() {
+  if (!fbInit()) return;
+  var phone = (_currentUser && _currentUser._profile) ? _currentUser._profile.phone : '';
+  if (!phone) { document.getElementById('otp-err').textContent = 'No phone number on file'; return; }
+  document.getElementById('otp-err').textContent = 'Sending OTP...';
+  try {
+    if (!_otpRecaptchaVerifier) {
+      _otpRecaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-vault', { size: 'invisible' });
+    }
+    _fbAuth.signInWithPhoneNumber(phone, _otpRecaptchaVerifier)
+      .then(function(result) {
+        _otpConfirmResult = result;
+        document.getElementById('otp-send-section').style.display = 'none';
+        document.getElementById('otp-verify-section').style.display = '';
+        document.getElementById('otp-err').textContent = '';
+        if(document.getElementById('otp0'))document.getElementById('otp0').focus();
+        /* Also show inline vault inputs if we are inside vault modal */
+        var vInp = document.getElementById('vault-otp-inputs');
+        if (vInp) {
+          vInp.style.display = '';
+          var firstVotp = document.getElementById('votp0');
+          if (firstVotp) firstVotp.focus();
+        }
+        showToast('OTP sent to ' + maskPhone(phone));
+      })
+      .catch(function(e) {
+        document.getElementById('otp-err').textContent = e.message || 'Failed to send OTP';
+        _otpRecaptchaVerifier = null; /* Reset for retry */
+      });
+  } catch(e) {
+    document.getElementById('otp-err').textContent = e.message;
+  }
+}
+
+function otpNext(input, idx) {
+  var pfx = input.id.startsWith('votp') ? 'votp' : 'otp';
+  if (input.value.length === 1 && idx < 5) {
+    var next = document.getElementById(pfx + (idx + 1));
+    if (next) next.focus();
+  }
+  if (idx === 5 && input.value.length === 1) {
+    if (pfx === 'votp') verifyVaultOTPInline();
+    else verifyVaultOTP();
+  }
+}
+
+function otpBack(e, idx) {
+  if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+    var pfx = e.target.id.startsWith('votp') ? 'votp' : 'otp';
+    var prev = document.getElementById(pfx + (idx - 1));
+    if (prev) prev.focus();
+  }
+}
+
+function verifyVaultOTPInline() {
+  var code = '';
+  for (var i = 0; i < 6; i++) {
+    var el = document.getElementById('votp' + i);
+    code += (el ? el.value : '');
+  }
+  if (code.length < 6) {
+    var e = document.getElementById('vault-otp-err');
+    if (e) e.textContent = 'Enter all 6 digits';
+    return;
+  }
+  if (!_otpConfirmResult) {
+    var e2 = document.getElementById('vault-otp-err');
+    if (e2) e2.textContent = 'Please send OTP first';
+    return;
+  }
+  var errEl = document.getElementById('vault-otp-err');
+  if (errEl) errEl.textContent = 'Verifying...';
+  _otpConfirmResult.confirm(code)
+    .then(function() {
+      vaultUnlocked = true;
+      _vKey = 'vault_' + (_currentUser ? _currentUser.uid : 'local');
+      resetVaultLockTimer();
+      renderVaultTab();
+      showToast('🔓 Vault unlocked');
+    })
+    .catch(function() {
+      var e3 = document.getElementById('vault-otp-err');
+      if (e3) e3.textContent = 'Invalid OTP — try again';
+    });
+}
+
+/* Updated sendVaultOTP to work inside vault modal */
+
+function verifyVaultOTP() {
+  var code = '';
+  for (var i = 0; i < 6; i++) code += (document.getElementById('otp' + i).value || '');
+  if (code.length < 6) { document.getElementById('otp-err').textContent = 'Enter all 6 digits'; return; }
+  document.getElementById('otp-err').textContent = 'Verifying...';
+  if (!_otpConfirmResult) {
+    document.getElementById('otp-err').textContent = 'Please send OTP first';
+    return;
+  }
+  _otpConfirmResult.confirm(code)
+    .then(function() {
+      vaultUnlocked = true;
+      _vKey = 'vault_' + (_currentUser ? _currentUser.uid : 'local');
+      closeVaultOTP();
+      renderVaultTab();
+      openM('m-vault');
+      resetVaultLockTimer();
+      showToast('\uD83D\uDD13 Vault unlocked');
+    })
+    .catch(function(e) {
+      document.getElementById('otp-err').textContent = 'Invalid OTP. Try again.';
+    });
+}
+
+function closeVaultOTP() {
+  var ov = document.getElementById('vault-otp-overlay');
+  if (ov) ov.classList.add('hidden');
+}
+
+/* Override the vault open button to use OTP */
+function openVaultModal() {
+  if (_currentUser && _currentUser.uid !== 'offline') {
+    openVaultWithOTP();
+  } else {
+    /* Offline: use legacy PIN vault */
+    renderVault();
+    openM('m-vault');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FOCUS MODE — Full implementation
+   ═══════════════════════════════════════════════════════════════════ */
+var _focusMode = false;
+var _focusTimer = null;
+var _focusStart = null;
+
+function toggleFocusMode() {
+  _focusMode = !_focusMode;
+  document.body.classList.toggle('focus-mode', _focusMode);
+  var btn = document.getElementById('focus-mode-btn');
+  if (btn) { btn.classList.toggle('active', _focusMode); btn.textContent = _focusMode ? '\u2299 Exit Focus' : '\u2299 Focus'; }
+
+  if (_focusMode) {
+    _focusStart = Date.now();
+    /* Focus on journal editor */
+    var ed = document.getElementById('pd-editor');
+    if (ed) setTimeout(function() { ed.focus(); }, 100);
+    /* Start word count + clock update */
+    _focusTimer = setInterval(updateFocusBar, 1000);
+    updateFocusBar();
+    /* On mobile: switch to journal tab */
+    if (window.innerWidth <= 700) showMobTab('ccol', document.getElementById('mobt-journal'));
+    showToast('\u2299 Focus mode — Ctrl+Shift+F to exit');
+  } else {
+    if (_focusTimer) { clearInterval(_focusTimer); _focusTimer = null; }
+    var ov = document.getElementById('focus-overlay');
+    /* Save when exiting focus */
+    autoSaveDay();
+  }
+}
+
+function updateFocusBar() {
+  /* Word count */
+  var ed = document.getElementById('pd-editor');
+  var wcEl = document.getElementById('focus-wc');
+  if (ed && wcEl) {
+    var text = ed.innerText || ed.textContent || '';
+    var words = text.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+    wcEl.textContent = words + ' word' + (words === 1 ? '' : 's');
+  }
+  /* Elapsed time */
+  var timeEl = document.getElementById('focus-time');
+  if (timeEl && _focusStart) {
+    var elapsed = Math.floor((Date.now() - _focusStart) / 1000);
+    var m = Math.floor(elapsed / 60), s = elapsed % 60;
+    timeEl.textContent = (m > 0 ? m + 'm ' : '') + s + 's';
+  }
+  /* Live clock */
+  var clk = document.getElementById('focus-time');
+  if (clk) {
+    var now = new Date();
+    clk.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   UPCOMING MEETINGS — schedule for future dates
+   ═══════════════════════════════════════════════════════════════════ */
+function saveUpcomingMeeting(meetData) {
+  /* meetData: { date, time, title, notes } */
+  var key = 'upcoming_meets';
+  var meets = load(key, []);
+  meetData.id = Date.now() + '_' + Math.random().toString(36).slice(2);
+  meets.push(meetData);
+  save(key, meets);
+  /* Also push to cloud */
+  if (_currentUser && _fbDb && _currentUser.uid !== 'offline') {
+    _fbDb.collection('users').doc(_currentUser.uid)
+      .collection('upcoming_meets').doc(meetData.id)
+      .set(meetData)
+      .catch(function(e) { console.error(e); });
+  }
+  showToast('\uD83D\uDCC5 Meeting scheduled for ' + meetData.date);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   restoreDayData — updated to accept data param
+   ═══════════════════════════════════════════════════════════════════ */
+var _origRestoreDayData = window.restoreDayData;
+
+function restoreDayData(dateStr, preloadedData) {
+  var key = dateStr ? 'diary_day_' + dateStr : TODAY;
+  var d = preloadedData || load(key, null);
+  if (!d) { clearDayUI(); return; }
+  setTimeout(function() {
+    if (d.intention) { var it = document.getElementById('intention-ta'); if (it) { it.value = d.intention; autoR(it); } }
+    if (d.top3) { var els = document.querySelectorAll('.t3t'); d.top3.forEach(function(v, i) { if (els[i]) { els[i].value = v; autoR(els[i]); } }); }
+    if (d.ct3) { var els2 = document.querySelectorAll('.ct3-ta'); d.ct3.forEach(function(v, i) { if (els2[i]) { els2[i].value = v; autoR(els2[i]); } }); }
+    if (d.slots) { Object.keys(d.slots).forEach(function(id) { var el = document.getElementById(id); if (el) { var ta = el.querySelector('.tinp'); if (ta) { ta.value = d.slots[id]; autoR(ta); } } }); }
+    if (d.tasks && d.tasks.length) {
+      var list = document.getElementById('task-list'); if (!list) return;
+      list.innerHTML = '';
+      d.tasks.forEach(function(t) {
+        var li = document.createElement('li'); li.className = 'task-item'; li.setAttribute('draggable', 'true');
+        li.innerHTML = '<div class="chk' + (t.done ? ' on' : '') + '" onclick="togTask(this)"></div><textarea class="t-ta' + (t.done ? ' done' : '') + '" rows="1" oninput="autoR(this)">' + escH(t.text) + '</textarea><span class="ptag pt-' + (t.p || 'M') + '" onclick="cycP(this)">' + (t.p || 'M') + '</span>';
+        list.appendChild(li);
+      });
+      updBadge();
+    }
+    if (d.habits && d.habits.length) {
+      var hrows = document.getElementById('hab-rows'); if (!hrows) return;
+      hrows.innerHTML = '';
+      d.habits.forEach(function(h) {
+        var row = document.createElement('div'); row.className = 'hab-row';
+        row.innerHTML = '<input class="hab-inp" type="text" value="' + escH(h.name || '') + '" placeholder="Habit..."><div class="hab-dots">' + mkDots() + '</div>';
+        hrows.appendChild(row);
+        if (h.dots) h.dots.forEach(function(done, i) { if (done) { var dot = row.querySelectorAll('.hday')[i]; if (dot) dot.classList.add('done'); } });
+      });
+    }
+    if (d.wData) { d.wData.forEach(function(v, i) { wData[i] = v; }); if (d.wTarget) wTarget = d.wTarget; buildWater(); }
+    if (d.reflections) { var rtas = document.querySelectorAll('.r-ta'); d.reflections.forEach(function(v, i) { if (rtas[i]) { rtas[i].value = v; autoR(rtas[i]); } }); }
+    if (d.freewrite) { var ft2 = document.querySelector('.free-ta'); if (ft2) { ft2.value = d.freewrite; autoR(ft2); } }
+    if (d.dayEmoji) document.querySelectorAll('.dlem').forEach(function(e) { if (e.innerHTML === d.dayEmoji) e.classList.add('picked'); });
+    if (d.dayRating) setDR(d.dayRating);
+    if (d.dlFields) { var dlf = document.querySelectorAll('.dl-field textarea'); d.dlFields.forEach(function(v, i) { if (dlf[i]) { dlf[i].value = v; autoR(dlf[i]); } }); }
+    if (d.notes && d.notes.length) {
+      var nl = document.getElementById('notes-list'); if (!nl) return;
+      nl.innerHTML = '';
+      d.notes.forEach(function(n) {
+        var div = document.createElement('div'); div.className = 'note-item';
+        div.innerHTML = '<div class="note-bar" style="background:' + (n.color || '#3b82f6') + '"></div><div class="note-body"><div class="note-hdr"><input class="note-ti" type="text" placeholder="Title..." value="' + escH(n.title || '') + '"><button class="note-del" onclick="this.closest(\'.note-item\').remove()">✕</button></div><textarea class="note-ta" rows="2" oninput="autoR(this)">' + escH(n.text || '') + '</textarea></div>';
+        nl.appendChild(div);
+      });
+    }
+    if (d.mood) { var ms = document.getElementById('mood-sel'); if (ms) ms.value = d.mood; }
+    if (d.energy) setE(d.energy);
+    if (d.meets && d.meets.length) {
+      meetN = 0;
+      document.getElementById('meet-list').innerHTML = '';
+      d.meets.forEach(function(m) {
+        addMeet();
+        var cards = document.querySelectorAll('.meet-card');
+        var last = cards[cards.length - 1];
+        if (!last) return;
+        var ms2 = last.querySelector('.ms'); if (ms2) ms2.value = m.time;
+        var md = last.querySelector('.md'); if (md) md.value = m.dur;
+        var mn = last.querySelector('.mname'); if (mn) mn.value = m.name;
+        var mnotes = last.querySelector('.mnotes'); if (mnotes) { mnotes.value = m.notes; autoR(mnotes); }
+        refEnd(last);
+      });
+    }
+    if (d.emis && d.emis.length) {
+      var el = document.getElementById('emi-list');
+      if (el) {
+        el.innerHTML = '';
+        d.emis.forEach(function(e) {
+          addEmiRow();
+          var rows = el.querySelectorAll('div');
+          var last = rows[rows.length - 1]; if (!last) return;
+          var nm = last.querySelector('[data-emi-name]'); if (nm) nm.value = e.name;
+          var am = last.querySelector('[data-emi-amt]'); if (am) am.value = e.amt;
+          var dt = last.querySelector('[data-emi-date]'); if (dt) dt.value = e.day;
+        });
+      }
+    }
+    if (d.goals && d.goals.length) {
+      var gl = document.getElementById('goals-list');
+      if (gl) { gl.innerHTML = ''; d.goals.forEach(function(g) { addGoal(g.text, g.done); }); }
+    }
+  }, 350);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOOT — Firebase auth listener
+   ═══════════════════════════════════════════════════════════════════ */
+function initFirebaseAndAuth() {
+  if (typeof firebase !== 'undefined') {
+    startAuthListener();
+  } else {
+    /* Firebase CDN failed to load — run offline */
+    console.warn('Firebase CDN not available. Running offline.');
+    onOfflineMode();
+  }
+}
+
+
+var _pdMedia=[];
 
 var NOW=new Date(),DL=['M','T','W','T','F','S','S'],todayI=(NOW.getDay()+6)%7;
 var wData=Array(7).fill(0),wTarget=4,meetN=0,ncIdx=0,sleepFrom=0,sleepTo=23;
@@ -1074,10 +2060,10 @@ function isSleep(h){return h>=sleepTo||h<sleepFrom;}
   var d=NOW.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   var el=document.getElementById('cover-date');if(el)el.textContent=d;
   var gr=document.getElementById('date-greet');var hr=NOW.getHours();
-  if(gr)gr.textContent=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+', Aman — make today count.';
+  if(gr)gr.textContent=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+', '+(_currentUser&&_currentUser.displayName?_currentUser.displayName.split(' ')[0]:'')+' — make today count.';
   var pd=document.getElementById('pd-date');if(pd)pd.textContent=d;
   var pg=document.getElementById('pd-greet');
-  if(pg)pg.textContent=hr<12?'Good morning, Aman':hr<17?'Good afternoon, Aman':'Good evening, Aman';
+  if(pg)pg.textContent=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
 })();
 
 /* ── mobile tabs ── */
@@ -2258,34 +3244,12 @@ function collectDay(){
   d.goals=[].slice.call(document.querySelectorAll('#goals-list .goal-item')).map(function(g){var ta=g.querySelector('.goal-ta'),ck=g.querySelector('.goal-chk');return{text:ta?ta.value:'',done:ck?ck.classList.contains('on'):false};});
   return d;
 }
-function autoSaveDay(){var d=collectDay();save(TODAY,d);var lbl=document.getElementById('pd-savelbl');if(lbl&&lbl.textContent==='unsaved')lbl.textContent='';}
-function doSave(){autoSaveDay();_pdSave();showToast('✦ Diary saved!');}
 
-function restoreDayData(){
-  var d=load(TODAY,null);if(!d)return;
-  setTimeout(function(){
-    if(d.intention){var it=document.getElementById('intention-ta');if(it){it.value=d.intention;autoR(it);}}
-    if(d.top3){var els=document.querySelectorAll('.t3t');d.top3.forEach(function(v,i){if(els[i]){els[i].value=v;autoR(els[i]);}});}
-    if(d.ct3){var els2=document.querySelectorAll('.ct3-ta');d.ct3.forEach(function(v,i){if(els2[i]){els2[i].value=v;autoR(els2[i]);}});}
-    if(d.slots){Object.keys(d.slots).forEach(function(id){var el=document.getElementById(id);if(el){var ta=el.querySelector('.tinp');if(ta){ta.value=d.slots[id];autoR(ta);}}});}
-    if(d.tasks&&d.tasks.length){var list=document.getElementById('task-list');list.innerHTML='';d.tasks.forEach(function(t){var li=document.createElement('li');li.className='task-item';li.setAttribute('draggable','true');li.innerHTML='<div class="chk'+(t.done?' on':'')+'\" onclick="togTask(this)"></div><textarea class="t-ta'+(t.done?' done':'')+'" rows="1" oninput="autoR(this)">'+escH(t.text)+'</textarea><span class="ptag pt-'+(t.p||'M')+'" onclick="cycP(this)">'+(t.p||'M')+'</span>';list.appendChild(li);});updBadge();}
-    if(d.habits&&d.habits.length){var hrows=document.getElementById('hab-rows');hrows.innerHTML='';d.habits.forEach(function(h){var row=document.createElement('div');row.className='hab-row';row.innerHTML='<input class="hab-inp" type="text" value="'+escH(h.name||'')+'" placeholder="Habit..."><div class="hab-dots">'+mkDots()+'</div>';hrows.appendChild(row);if(h.dots)h.dots.forEach(function(done,i){if(done){var dot=row.querySelectorAll('.hday')[i];if(dot)dot.classList.add('done');}});});}
-    if(d.wData){d.wData.forEach(function(v,i){wData[i]=v;});if(d.wTarget)wTarget=d.wTarget;buildWater();}
-    if(d.reflections){var rtas=document.querySelectorAll('.r-ta');d.reflections.forEach(function(v,i){if(rtas[i]){rtas[i].value=v;autoR(rtas[i]);}});}
-    if(d.freewrite){var ft2=document.querySelector('.free-ta');if(ft2){ft2.value=d.freewrite;autoR(ft2);}}
-    if(d.dayEmoji){document.querySelectorAll('.dlem').forEach(function(e){if(e.innerHTML===d.dayEmoji)e.classList.add('picked');});}
-    if(d.dayRating)setDR(d.dayRating);
-    if(d.dlFields){var dlf=document.querySelectorAll('.dl-field textarea');d.dlFields.forEach(function(v,i){if(dlf[i]){dlf[i].value=v;autoR(dlf[i]);}});}
-    if(d.notes&&d.notes.length){var nl=document.getElementById('notes-list');nl.innerHTML='';d.notes.forEach(function(n){var div=document.createElement('div');div.className='note-item';div.innerHTML='<div class="note-bar" style="background:'+(n.color||'#3b82f6')+'"></div><div class="note-body"><div class="note-hdr"><input class="note-ti" type="text" placeholder="Title..." value="'+escH(n.title||'')+'"><button class="note-del" onclick="this.closest(\'.note-item\').remove()">✕</button></div><textarea class="note-ta" rows="2" oninput="autoR(this)">'+escH(n.text||'')+'</textarea></div>';nl.appendChild(div);});}
-    if(d.mood){var ms=document.getElementById('mood-sel');if(ms)ms.value=d.mood;}
-    if(d.energy)setE(d.energy);
-    if(d.meets&&d.meets.length){meetN=0;document.getElementById('meet-list').innerHTML='';d.meets.forEach(function(m){addMeet();var c=document.querySelectorAll('.meet-card');var last=c[c.length-1];if(!last)return;var ms2=last.querySelector('.ms');if(ms2)ms2.value=m.time;var md=last.querySelector('.md');if(md)md.value=m.dur;var mn=last.querySelector('.mname');if(mn)mn.value=m.name;var mnotes=last.querySelector('.mnotes');if(mnotes){mnotes.value=m.notes;autoR(mnotes);}refEnd(last);});}
-    if(d.emis&&d.emis.length){var el=document.getElementById('emi-list');if(el){el.innerHTML='';d.emis.forEach(function(e){addEmiRow();var rows=el.querySelectorAll('div');var last=rows[rows.length-1];if(!last)return;var nm=last.querySelector('[data-emi-name]');if(nm)nm.value=e.name;var am=last.querySelector('[data-emi-amt]');if(am)am.value=e.amt;var dt=last.querySelector('[data-emi-date]');if(dt)dt.value=e.day;});}}
-    if(d.goals&&d.goals.length){var gl=document.getElementById('goals-list');if(gl){gl.innerHTML='';d.goals.forEach(function(g){addGoal(g.text,g.done);});}}
-  },350);
-}
 
-function hookAutoSave(){document.addEventListener('input',function(e){if(e.target.closest&&(e.target.closest('#app')||e.target.closest('#pd-editor'))){clearTimeout(window._asSave);window._asSave=setTimeout(autoSaveDay,2000);}});setInterval(autoSaveDay,30000);}
+
+/* restoreDayData defined in new features above */
+
+function hookAutoSave(){document.addEventListener('input',function(e){if(e.target.closest&&(e.target.closest('#app')||e.target.closest('#pd-editor'))){clearTimeout(window._asSave);window._asSave=setTimeout(autoSaveDay,2000);}});setInterval(autoSaveDay,60000);}  /* auto-save every 60s */
 
 /* ── search ── */
 function doSearch(q){
@@ -2388,7 +3352,39 @@ function hashPin(pin){
 }
 function lockVault(){vaultUnlocked=false;_vKey='';renderVault();}
 
-function renderVault(){var body=document.getElementById('vault-body');if(!body)return;var hasPin=!!localStorage.getItem(VPIN);if(!vaultUnlocked){body.innerHTML='<div style="text-align:center;padding:1rem 0;"><div style="font-size:2.2rem;margin-bottom:.5rem;">'+(hasPin?'🔒':'🔓')+'</div><div class="vault-pin-wrap"><span>PIN</span><input id="vault-pin-inp" type="password" maxlength="7" placeholder="Enter 7-digit PIN" style="letter-spacing:.12em;font-family:JetBrains Mono,monospace;font-size:.9rem;"><button onclick="vaultAuth()">Unlock</button></div><div class="vault-err" id="vault-err"></div></div>';return;}renderVaultTab();}
+function renderVault(){
+  var body=document.getElementById('vault-body');if(!body)return;
+  if(!vaultUnlocked){
+    /* If logged in with Firebase — show OTP unlock */
+    if(_currentUser && _currentUser.uid!=='offline'){
+      body.innerHTML='<div style="text-align:center;padding:1.5rem 0;">'
+        +'<div style="font-size:2.5rem;margin-bottom:.6rem;">🔒</div>'
+        +'<div style="font-family:Playfair Display,serif;font-size:1.1rem;color:var(--accent);margin-bottom:.4rem;">Secure Vault</div>'
+        +'<div style="font-family:Lora,serif;font-style:italic;font-size:.78rem;color:var(--muted);margin-bottom:1.2rem;">'
+        +'OTP will be sent to your registered phone</div>'
+        +'<button class="auth-btn" style="max-width:200px;margin:0 auto;" onclick="sendVaultOTP()">Send OTP →</button>'
+        +'<div id="vault-otp-inputs" style="display:none;margin-top:1rem;">'
+        +'<div class="otp-inputs">'
+        +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,0)" onkeydown="otpBack(event,0)" id="votp0">'
+        +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,1)" onkeydown="otpBack(event,1)" id="votp1">'
+        +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,2)" onkeydown="otpBack(event,2)" id="votp2">'
+        +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,3)" onkeydown="otpBack(event,3)" id="votp3">'
+        +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,4)" onkeydown="otpBack(event,4)" id="votp4">'
+        +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,5)" onkeydown="otpBack(event,5)" id="votp5">'
+        +'</div>'
+        +'<button class="auth-btn" style="max-width:200px;margin:.8rem auto 0;" onclick="verifyVaultOTPInline()">Verify & Open →</button>'
+        +'</div>'
+        +'<div class="otp-err" id="vault-otp-err"></div>'
+        +'</div>';
+    } else {
+      /* Offline fallback — legacy PIN */
+      var hasPin=!!localStorage.getItem(VPIN);
+      body.innerHTML='<div style="text-align:center;padding:1rem 0;"><div style="font-size:2.2rem;margin-bottom:.5rem;">'+(hasPin?'🔒':'🔓')+'</div><div class="vault-pin-wrap"><span>PIN</span><input id="vault-pin-inp" type="password" maxlength="7" placeholder="7-digit PIN" style="letter-spacing:.12em;font-family:JetBrains Mono,monospace;font-size:.9rem;" onkeydown="if(event.key===\'Enter\')vaultAuth()"><button onclick="vaultAuth()">Unlock</button></div><div class="vault-err" id="vault-err"></div></div>';
+    }
+    return;
+  }
+  renderVaultTab();
+}
 function vaultAuth(){
   var inp=document.getElementById('vault-pin-inp');if(!inp)return;
   var v=inp.value.trim();
@@ -2507,7 +3503,18 @@ setupColResize('div-left','lcol','ccol');setupColResize('div-right','ccol','rcol
 ['div-left','div-right'].forEach(function(did){var d=load('col_'+did,null);if(!d)return;var ids={'div-left':['lcol','ccol'],'div-right':['ccol','rcol']}[did];var L=document.getElementById(ids[0]),R=document.getElementById(ids[1]);if(L&&R){L.style.width=Math.max(180,d.lw||270)+'px';L.style.flex='none';R.style.width=Math.max(180,d.rw||310)+'px';R.style.flex='none';}});
 
 /* ── keyboard shortcuts ── */
-document.addEventListener('keydown',function(e){if(e.ctrlKey||e.metaKey){if(e.key==='s'){e.preventDefault();doSave();}if(e.key==='/'){e.preventDefault();openM('m-search');setTimeout(function(){var el=document.getElementById('search-input');if(el)el.focus();},200);}if(e.key==='k'){e.preventDefault();openM('m-qc');setTimeout(function(){var el=document.getElementById('qc-ta');if(el)el.focus();},200);}}if(e.key==='Escape')document.querySelectorAll('.modal-bg:not(.off)').forEach(function(m){m.classList.add('off');});});
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==='s'){e.preventDefault();doSave();}
+    if(e.key==='/'){e.preventDefault();openM('m-search');setTimeout(function(){var el=document.getElementById('search-input');if(el)el.focus();},200);}
+    if(e.key==='k'){e.preventDefault();openM('m-qc');setTimeout(function(){var el=document.getElementById('qc-ta');if(el)el.focus();},200);}
+    if(e.shiftKey&&e.key==='F'){e.preventDefault();toggleFocusMode();}
+  }
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal-bg:not(.off)').forEach(function(m){m.classList.add('off');});
+    if(_focusMode)toggleFocusMode();
+  }
+});
 
 
 /* ══════════════════════════════════════════════════
@@ -2536,13 +3543,7 @@ function spawnConfetti(el){
 /* ══════════════════════════════════════════════════
    FOCUS MODE
 ══════════════════════════════════════════════════ */
-var _focusMode=false;
-function toggleFocusMode(){
-  _focusMode=!_focusMode;
-  document.body.classList.toggle('focus-mode',_focusMode);
-  var btn=document.getElementById('focus-mode-btn');
-  if(btn){btn.classList.toggle('active',_focusMode);btn.textContent=_focusMode?'⊙ Exit Focus':'⊙ Focus';}
-}
+/* toggleFocusMode defined in new features above */
 
 /* ══════════════════════════════════════════════════
    SHAKE + HAPTIC for task delete
@@ -2776,11 +3777,20 @@ applyTheme(load('diary_theme','classic'));
 if(window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches&&!load('diary_theme',null))applyTheme('night');
 /* Init new features */
 initTaskDrag();
-/* Make task items draggable */
-document.addEventListener('DOMNodeInserted',function(e){
-  var item=e.target&&e.target.classList&&e.target.classList.contains&&e.target.classList.contains('task-item')?e.target:null;
-  if(item)item.setAttribute('draggable','true');
-});
+/* Make task items draggable via MutationObserver */
+(function(){
+  var obs=new MutationObserver(function(muts){
+    muts.forEach(function(mut){
+      mut.addedNodes.forEach(function(node){
+        if(node.nodeType===1&&node.classList&&node.classList.contains('task-item')){
+          node.setAttribute('draggable','true');
+        }
+      });
+    });
+  });
+  var tl=document.getElementById('task-list');
+  if(tl)obs.observe(tl,{childList:true,subtree:false});
+})();
 /* Auto-tag on editor blur */
 var pdEd=document.getElementById('pd-editor');
 if(pdEd)pdEd.addEventListener('blur',autoTagEditor);
@@ -2795,6 +3805,12 @@ document.querySelectorAll('#s-top3 .t3t').forEach(function(inp){
 });
 /* Vault activity tracking */
 document.addEventListener('click',function(){resetVaultLockTimer();});
+
+/* ── Start Firebase Auth ── */
+initFirebaseAndAuth();
+var savedViewDate=load('_viewDate',NOW.toISOString().slice(0,10));
+_viewDate=savedViewDate;
+updateViewingDate(savedViewDate);
 
 /* ── Fix mobile layout heights dynamically ── */
 function fixMobileLayout(){
@@ -2821,15 +3837,23 @@ if(window.innerWidth<=700){
   setTimeout(fixMobileLayout,100);
 }
 
+/* update page title */
+document.title="Dastavez — "+NOW.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
 /* date strip */
-(function(){var hr=NOW.getHours();var g=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';var el=document.getElementById('date-greet');if(el)el.textContent=g+', Aman — make today count.';var cd=document.getElementById('cover-date');if(cd)cd.textContent=NOW.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});})();
+(function(){
+  var hr=NOW.getHours();
+  var g=hr<5?'Good night':hr<12?'Good morning':hr<17?'Good afternoon':hr<21?'Good evening':'Good night';
+  var el=document.getElementById('date-greet');
+  if(el)el.textContent=g+', '+(_currentUser&&_currentUser.displayName?_currentUser.displayName.split(' ')[0]:'')+' — make today count.';
+  var cd=document.getElementById('cover-date');
+  if(cd)cd.textContent=NOW.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+})();
 
 /* habits header */
 (function(){var hdrs=document.getElementById('hab-hdrs');if(!hdrs)return;['M','T','W','T','F','S','S'].forEach(function(l,i){var d=document.createElement('div');d.className='hdl'+(i===todayI?' td':'');d.textContent=l;hdrs.appendChild(d);});})();
 
 /* restore sleep */
-var sl=load('diary_sleep',null);if(sl){document.getElementById('sf').value=sl.f;document.getElementById('st').value=sl.t;sleepFrom=parseInt(sl.f.split(':')[0]);sleepTo=parseInt(sl.t.split(':')[0]);document.getElementById('sleep-chip').textContent='🌙 '+sl.t+' – '+sl.f;buildPlanner();}
-else{setTimeout(function(){openM('m-sleep');},600);}
+var sl=load('diary_sleep',null);if(sl){var sfEl=document.getElementById('sf');var stEl=document.getElementById('st');if(sfEl)sfEl.value=sl.f;if(stEl)stEl.value=sl.t;sleepFrom=parseInt(sl.f.split(':')[0]);sleepTo=parseInt(sl.t.split(':')[0]);var sc=document.getElementById('sleep-chip');if(sc)sc.textContent='🌙 '+sl.t+' – '+sl.f;buildPlanner();}
 
 /* restore energy */
 var savedE=load('diary_e_'+NOW.toISOString().slice(0,10),0);if(savedE)setE(savedE);
@@ -2843,7 +3867,7 @@ _pins.forEach(function(sid){var sec=document.getElementById(sid);if(sec)sec.clas
 applyVisibility();
 
 /* restore day data */
-restoreDayData();
+/* Day restore handled by loadDayFromCloud in initFirebaseAndAuth */
 loadGoals();
 hookAutoSave();
 
@@ -2875,4 +3899,4 @@ function showMobTab(colId,btn){_showMobTabMaster(colId,btn);}
 </body>
 </html<!-- MOBILE BOTTOM NAV --><nav class="mobnav" id="mobile-nav"><div class="mobnav-row"><button class="mobt mobt-active" id="mobt-plan" onclick="showMobTab('lcol',this)"><span class="mobt-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span><span class="mobt-lb">Plan</span></button><button class="mobt" id="mobt-journal" onclick="showMobTab('ccol',this)"><span class="mobt-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span class="mobt-lb">Journal</span></button><button class="mobt" id="mobt-planner" onclick="showMobTab('rcol',this)"><span class="mobt-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="mobt-lb">Planner</span></button><button class="mobt" onclick="toggleMobMore()"><span class="mobt-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span><span class="mobt-lb">More</span></button></div>
 <div style="display:flex;justify-content:center;gap:4px;padding:.18rem 0 0;"><div id="tab-dot-0" style="width:16px;height:3px;border-radius:2px;background:var(--accent);transition:all .2s;"></div><div id="tab-dot-1" style="width:6px;height:3px;border-radius:2px;background:var(--line);transition:all .2s;"></div><div id="tab-dot-2" style="width:6px;height:3px;border-radius:2px;background:var(--line);transition:all .2s;"></div></div>
-</nav><!-- MOBILE MORE DRAWER --><div class="mob-more-drawer" id="mob-more-drawer"><div style="width:36px;height:4px;background:var(--line);border-radius:2px;margin:0 auto .8rem;"></div><div class="mob-more-grid"><button class="mob-more-btn" onclick="openM('m-sections');buildSP();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span>Sections</span></button><button class="mob-more-btn" onclick="openM('m-theme');closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></span><span>Themes</span></button><button class="mob-more-btn" onclick="openM('m-vault');renderVault();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span>Vault</span></button><button class="mob-more-btn" onclick="openM('m-search');setTimeout(function(){var el=document.getElementById('search-input');if(el)el.focus();},200);closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span>Search</span></button><button class="mob-more-btn" onclick="openM('m-sleep');closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span><span>Sleep</span></button><button class="mob-more-btn" onclick="openWeeklyReview();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Week</span></button><button class="mob-more-btn" onclick="openM('m-export');closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span>Export</span></button><button class="mob-more-btn" onclick="doSave();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span><span>Save</span></button></div><button class="mob-more-btn" onclick="toggleFocusMode();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span><span>Focus</span></button><button class="mob-more-close" onclick="closeMobMore()">&#10005; Close</button></div><div class="mob-more-overlay" id="mob-more-overlay" onclick="closeMobMore()"></div>>
+</nav><!-- MOBILE MORE DRAWER --><div class="mob-more-drawer" id="mob-more-drawer"><div style="width:36px;height:4px;background:var(--line);border-radius:2px;margin:0 auto .8rem;"></div><div class="mob-more-grid"><button class="mob-more-btn" onclick="openM('m-sections');buildSP();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span><span>Sections</span></button><button class="mob-more-btn" onclick="openM('m-theme');closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></span><span>Themes</span></button><button class="mob-more-btn" onclick="openVaultModal();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span>Vault</span></button><button class="mob-more-btn" onclick="openM('m-search');setTimeout(function(){var el=document.getElementById('search-input');if(el)el.focus();},200);closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span>Search</span></button><button class="mob-more-btn" onclick="openM('m-sleep');closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span><span>Sleep</span></button><button class="mob-more-btn" onclick="openWeeklyReview();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Week</span></button><button class="mob-more-btn" onclick="openM('m-export');closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span>Export</span></button><button class="mob-more-btn" onclick="doSave();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span><span>Save</span></button></div><button class="mob-more-btn" onclick="toggleFocusMode();closeMobMore()"><span class="mmb-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg></span><span>Focus</span></button><button class="mob-more-close" onclick="closeMobMore()">&#10005; Close</button></div><div class="mob-more-overlay" id="mob-more-overlay" onclick="closeMobMore()"></div>>
