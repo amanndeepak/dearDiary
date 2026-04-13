@@ -1382,6 +1382,12 @@ var FIREBASE_CONFIG = {
   appId: "1:1054185939883:web:f631fceb7111f5f3d3e8ee",
   measurementId: "G-V77EKDZXR4"
 };
+/* ── DOMAIN: www.sianap.com ──────────────────────────────────
+   Add this domain in Firebase Console:
+   Authentication → Settings → Authorized domains → Add domain:
+     sianap.com
+     www.sianap.com
+   ──────────────────────────────────────────────────────────── */
 
 /* ── Firebase app instance (lazy init) ── */
 var _fbApp = null, _fbAuth = null, _fbDb = null;
@@ -1823,56 +1829,110 @@ function maskPhone(phone) {
 
 function sendVaultOTP() {
   if (!fbInit()) return;
-  var phone = (_currentUser && _currentUser._profile) ? _currentUser._profile.phone : '';
-  /* Normalise phone — ensure it has + prefix */
+
+  /* Get phone from current user profile */
+  var phone = '';
+  if (_currentUser && _currentUser._profile && _currentUser._profile.phone) {
+    phone = _currentUser._profile.phone;
+  } else if (_currentUser && _currentUser.phoneNumber) {
+    phone = _currentUser.phoneNumber;
+  }
+
+  /* Normalise: strip spaces/dashes, add +91 if no country code */
+  phone = phone.replace(/[\s\-\(\)]/g, '');
   if (phone && !phone.startsWith('+')) phone = '+91' + phone.replace(/\D/g,'');
-  var errEl = document.getElementById('otp-err') || document.getElementById('vault-otp-err');
-  if (!phone) { if(errEl)errEl.textContent='No phone number on file. Add one in your profile.'; return; }
-  if(errEl)errEl.textContent='Sending OTP to '+maskPhone(phone)+'...';
 
-  /* Use a SEPARATE secondary Firebase auth instance to avoid 
-     interfering with the existing email/password session */
+  /* Find the error element — works from both vault modal and OTP overlay */
+  var errEl = document.getElementById('vault-otp-err') ||
+              document.getElementById('otp-err');
+
+  function setErr(msg) { if(errEl) errEl.textContent = msg; }
+  function clearErr()  { if(errEl) errEl.textContent = ''; }
+
+  if (!phone || phone.length < 10) {
+    setErr('No phone number on file. Please register with a valid mobile number.');
+    return;
+  }
+
+  setErr('Sending OTP to ' + maskPhone(phone) + '...');
+
+  /* Destroy any previous recaptcha */
+  if (_otpRecaptchaVerifier) {
+    try { _otpRecaptchaVerifier.clear(); } catch(e) {}
+    _otpRecaptchaVerifier = null;
+  }
+
+  /* The compat SDK RecaptchaVerifier must use the MAIN _fbAuth instance.
+     To avoid auth/internal-error we sign in with phone on the SAME app
+     but use a NAMED secondary app so it does not overwrite the main session. */
   try {
+    /* Get or create secondary app */
     var secApp;
-    try { secApp = firebase.app('vaultAuth'); }
-    catch(e) { secApp = firebase.initializeApp(FIREBASE_CONFIG, 'vaultAuth'); }
-    var secAuth = secApp.auth();
-
-    /* Reset recaptcha if needed */
-    if(_otpRecaptchaVerifier){
-      try{_otpRecaptchaVerifier.clear();}catch(e2){}
-      _otpRecaptchaVerifier=null;
+    try { secApp = firebase.app('dastavez-vault'); }
+    catch(noApp) {
+      secApp = firebase.initializeApp(FIREBASE_CONFIG, 'dastavez-vault');
     }
-    _otpRecaptchaVerifier = new firebase.auth.RecaptchaVerifier(
-      'recaptcha-vault',
-      {size:'invisible', auth: secAuth}
-    );
+    var secAuth = secApp.auth();
+    secAuth.useDeviceLanguage();
 
-    secAuth.signInWithPhoneNumber(phone, _otpRecaptchaVerifier)
-      .then(function(result) {
-        _otpConfirmResult = result;
-        if(errEl)errEl.textContent='';
-        /* Show OTP input boxes */
-        var sendSec = document.getElementById('otp-send-section');
-        if(sendSec)sendSec.style.display='none';
-        var verifySec = document.getElementById('otp-verify-section');
-        if(verifySec)verifySec.style.display='';
-        var vInp = document.getElementById('vault-otp-inputs');
-        if(vInp)vInp.style.display='';
-        var first = document.getElementById('votp0') || document.getElementById('otp0');
-        if(first)first.focus();
-        showToast('OTP sent to '+maskPhone(phone));
-      })
-      .catch(function(e) {
-        var msg=e.message||'Failed to send OTP';
-        if(e.code==='auth/invalid-phone-number')msg='Invalid phone number format. Use +91XXXXXXXXXX';
-        if(e.code==='auth/too-many-requests')msg='Too many attempts. Try again in a few minutes.';
-        if(errEl)errEl.textContent=msg;
-        _otpRecaptchaVerifier=null;
+    /* Render invisible recaptcha into the container div */
+    var container = document.getElementById('recaptcha-vault');
+    if (!container) {
+      /* Create the container dynamically if it doesn't exist */
+      container = document.createElement('div');
+      container.id = 'recaptcha-vault';
+      document.body.appendChild(container);
+    }
+    /* Clear old recaptcha HTML */
+    container.innerHTML = '';
+
+    _otpRecaptchaVerifier = new firebase.auth.RecaptchaVerifier(container, {
+      size: 'invisible',
+      callback: function() {},
+      'expired-callback': function() {
+        _otpRecaptchaVerifier = null;
+        setErr('Recaptcha expired. Please try again.');
+      }
+    }, secApp /* pass secondary app to RecaptchaVerifier */);
+
+    _otpRecaptchaVerifier.render().then(function() {
+      return secAuth.signInWithPhoneNumber(phone, _otpRecaptchaVerifier);
+    }).then(function(confirmResult) {
+      _otpConfirmResult = confirmResult;
+      clearErr();
+
+      /* Show OTP input fields */
+      ['otp-send-section'].forEach(function(id){
+        var el=document.getElementById(id); if(el)el.style.display='none';
       });
+      ['otp-verify-section','vault-otp-inputs'].forEach(function(id){
+        var el=document.getElementById(id); if(el)el.style.display='';
+      });
+
+      /* Focus first input */
+      var first = document.getElementById('votp0') || document.getElementById('otp0');
+      if (first) setTimeout(function(){ first.focus(); }, 100);
+
+      showToast('OTP sent to ' + maskPhone(phone));
+
+    }).catch(function(e) {
+      _otpRecaptchaVerifier = null;
+      var msg = 'Failed to send OTP';
+      if (e.code === 'auth/invalid-phone-number')
+        msg = 'Invalid number: ' + phone + '. Use format +91XXXXXXXXXX';
+      else if (e.code === 'auth/too-many-requests')
+        msg = 'Too many attempts. Wait a few minutes and retry.';
+      else if (e.code === 'auth/internal-error')
+        msg = 'Firebase error. Ensure Phone auth is enabled in Firebase Console.';
+      else if (e.code === 'auth/captcha-check-failed')
+        msg = 'Recaptcha failed. Try refreshing the page.';
+      else msg = e.message || msg;
+      setErr(msg);
+    });
+
   } catch(e) {
-    if(errEl)errEl.textContent=e.message;
-    _otpRecaptchaVerifier=null;
+    _otpRecaptchaVerifier = null;
+    setErr('Error: ' + (e.message || e));
   }
 }
 
@@ -1899,8 +1959,8 @@ function otpBack(e, idx) {
 function verifyVaultOTPInline() {
   var code = '';
   for (var i = 0; i < 6; i++) {
-    var el = document.getElementById('votp' + i);
-    code += (el ? el.value : '');
+    var el = document.getElementById('votp'+i) || document.getElementById('otp'+i);
+    code += (el ? el.value.trim() : '');
   }
   if (code.length < 6) {
     var e = document.getElementById('vault-otp-err');
@@ -1915,16 +1975,24 @@ function verifyVaultOTPInline() {
   var errEl = document.getElementById('vault-otp-err');
   if (errEl) errEl.textContent = 'Verifying...';
   _otpConfirmResult.confirm(code)
-    .then(function() {
-      vaultUnlocked = true;
-      _vKey = 'vault_' + (_currentUser ? _currentUser.uid : 'local');
+    .then(function(){
+      vaultUnlocked=true;
+      _vKey='vault_'+(_currentUser?_currentUser.uid:'local');
+      _otpConfirmResult=null;
+      try{firebase.app('dastavez-vault').auth().signOut();}catch(ex){}
+      var ov=document.getElementById('vault-otp-overlay');
+      if(ov)ov.classList.add('hidden');
       resetVaultLockTimer();
       renderVaultTab();
+      openM('m-vault');
       showToast('🔓 Vault unlocked');
     })
-    .catch(function() {
-      var e3 = document.getElementById('vault-otp-err');
-      if (e3) e3.textContent = 'Invalid OTP — try again';
+    .catch(function(e){
+      var msg='Invalid OTP. Try again.';
+      if(e&&e.code==='auth/code-expired')msg='OTP expired. Send a new one.';
+      if(e&&e.code==='auth/invalid-verification-code')msg='Wrong OTP. Check your SMS.';
+      if(e&&e.code==='auth/session-expired')msg='Session expired. Send OTP again.';
+      if(errEl)errEl.textContent=msg;
     });
 }
 
