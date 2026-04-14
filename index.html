@@ -1527,17 +1527,18 @@ function onAuthSuccess() {
   _fbAuth.onAuthStateChanged(function(user) {
     if (user) {
       _currentUser = user;
-      /* Load display name from Firestore */
+      /* Load profile first so phone is ready for vault */
       _fbDb.collection('users').doc(user.uid).get().then(function(doc) {
         if (doc.exists) {
           _currentUser._profile = doc.data();
-          var nameEl = document.getElementById('diary-name-el');
-          if (nameEl) nameEl.textContent = '\u2736 ' + doc.data().name + '\'s Diary';
+          refreshDiaryTitle();
         }
+        hideAuthOverlay();
+        loadDayFromCloud(_viewDate);
+      }).catch(function() {
+        hideAuthOverlay();
+        loadDayFromCloud(_viewDate);
       });
-      hideAuthOverlay();
-      refreshDiaryTitle();
-      loadDayFromCloud(_viewDate);
     }
   });
 }
@@ -1583,16 +1584,18 @@ function startAuthListener() {
   _fbAuth.onAuthStateChanged(function(user) {
     if (user) {
       _currentUser = user;
+      /* Load profile FIRST, then show app so phone is always available */
       _fbDb.collection('users').doc(user.uid).get().then(function(doc) {
         if (doc.exists) {
           _currentUser._profile = doc.data();
-          var nameEl = document.getElementById('diary-name-el');
-          if (nameEl) nameEl.textContent = '\u2736 ' + doc.data().name + '\'s Diary';
+          refreshDiaryTitle();
         }
+        hideAuthOverlay();
+        loadDayFromCloud(_viewDate);
+      }).catch(function() {
+        hideAuthOverlay();
+        loadDayFromCloud(_viewDate);
       });
-      hideAuthOverlay();
-      refreshDiaryTitle();
-      loadDayFromCloud(_viewDate);
     } else {
       showAuthOverlay();
     }
@@ -1794,33 +1797,14 @@ var _otpConfirmResult = null;
 var _otpRecaptchaVerifier = null;
 
 function openVaultWithOTP() {
-  /* Show OTP overlay instead of PIN */
   if (!_currentUser || _currentUser.uid === 'offline') {
-    /* Offline fallback — use legacy PIN */
-    renderVault();
-    openM('m-vault');
-    return;
+    renderVault(); openM('m-vault'); return;
   }
-  /* Check if user has phone */
-  var phone = (_currentUser._profile && _currentUser._profile.phone) ? _currentUser._profile.phone : '';
-  if (!phone) {
-    showToast('No phone number on account. Add one in settings.');
-    renderVault(); openM('m-vault');
-    return;
-  }
-  var ov = document.getElementById('vault-otp-overlay');
-  var desc = document.getElementById('otp-desc');
-  if (desc) desc.textContent = 'We will send an OTP to ' + maskPhone(phone);
-  if (ov) ov.classList.remove('hidden');
-  document.getElementById('otp-send-section').style.display = '';
-  document.getElementById('otp-verify-section').style.display = 'none';
-  document.getElementById('otp-err').textContent = '';
-  /* Clear OTP inputs */
-  for (var i = 0; i < 6; i++) {
-    var inp = document.getElementById('otp' + i);
-    if (inp) inp.value = '';
-  }
+  /* Always render vault — sendVaultOTP will fetch phone from Firestore if needed */
+  renderVault();
+  openM('m-vault');
 }
+
 
 function maskPhone(phone) {
   if (!phone) return '****';
@@ -1828,112 +1812,222 @@ function maskPhone(phone) {
 }
 
 function sendVaultOTP() {
-  if (!fbInit()) return;
+  /* Re-init firebase if needed */
+  if (!fbInit()) { showToast('Firebase not ready'); return; }
 
-  /* Get phone from current user profile */
-  var phone = '';
-  if (_currentUser && _currentUser._profile && _currentUser._profile.phone) {
-    phone = _currentUser._profile.phone;
-  } else if (_currentUser && _currentUser.phoneNumber) {
-    phone = _currentUser.phoneNumber;
-  }
-
-  /* Normalise: strip spaces/dashes, add +91 if no country code */
-  phone = phone.replace(/[\s\-\(\)]/g, '');
-  if (phone && !phone.startsWith('+')) phone = '+91' + phone.replace(/\D/g,'');
-
-  /* Find the error element — works from both vault modal and OTP overlay */
   var errEl = document.getElementById('vault-otp-err') ||
               document.getElementById('otp-err');
+  function setErr(msg){ if(errEl)errEl.textContent=msg; console.log('[Vault OTP]',msg); }
+  function clearErr() { if(errEl)errEl.textContent=''; }
 
-  function setErr(msg) { if(errEl) errEl.textContent = msg; }
-  function clearErr()  { if(errEl) errEl.textContent = ''; }
+  if (!_currentUser || !_currentUser.uid) {
+    setErr('Not signed in. Please log in first.'); return;
+  }
+  if (_currentUser.uid === 'offline') {
+    setErr('Phone OTP requires internet connection.'); return;
+  }
 
-  if (!phone || phone.length < 10) {
-    setErr('No phone number on file. Please register with a valid mobile number.');
+  setErr('Fetching your phone number...');
+
+  /* ALWAYS fetch fresh from Firestore — most reliable source */
+  _fbDb.collection('users').doc(_currentUser.uid).get()
+    .then(function(doc) {
+      if (!doc.exists) {
+        setErr('Account data not found. Try signing out and back in.');
+        return;
+      }
+      var data = doc.data();
+      /* Cache it */
+      _currentUser._profile = data;
+
+      /* Try every possible phone field */
+      var raw = data.phone || data.mobile || data.phoneNumber || '';
+
+      console.log('[Vault OTP] raw phone from Firestore:', JSON.stringify(raw));
+
+      if (!raw || raw.trim() === '') {
+        /* Show update prompt */
+        setErr('');
+        if(errEl) errEl.innerHTML =
+          'No phone on file. <button onclick="showUpdatePhoneUI()" '+
+          'style="background:var(--accent);color:#fff;border:none;border-radius:6px;'+
+          'padding:.2rem .5rem;font-size:.7rem;cursor:pointer;font-family:JetBrains Mono,monospace;">'+
+          'Add phone now</button>';
+        return;
+      }
+
+      /* Normalise: strip everything except digits and leading + */
+      var digits = raw.replace(/[^\d+]/g,'');
+      if (!digits.startsWith('+')) digits = '+91' + digits;
+
+      console.log('[Vault OTP] normalised phone:', digits);
+
+      if (digits.length < 12) {
+        setErr('Phone number too short: ' + digits + '. Expected +91XXXXXXXXXX');
+        return;
+      }
+
+      setErr('Sending OTP to ' + maskPhone(digits) + '...');
+      _doSendOTP(digits, setErr, clearErr);
+    })
+    .catch(function(e) {
+      console.error('[Vault OTP] Firestore error:', e);
+      setErr('Error loading profile: ' + (e.message || e.code || e));
+    });
+}
+
+function showUpdatePhoneUI() {
+  var errEl = document.getElementById('vault-otp-err') || document.getElementById('otp-err');
+  if (!errEl) return;
+  errEl.innerHTML =
+    '<div style="display:flex;flex-direction:column;gap:.5rem;padding:.4rem 0;">' +
+    '<input id="new-phone-inp" type="tel" placeholder="+91 98765 43210" '+
+    'style="padding:.4rem .6rem;border:1.5px solid var(--line);border-radius:8px;'+
+    'font-family:JetBrains Mono,monospace;font-size:.85rem;background:var(--cream);color:var(--ink);outline:none;">' +
+    '<button onclick="savePhoneAndSendOTP()" '+
+    'style="background:var(--accent);color:#fff;border:none;border-radius:8px;'+
+    'padding:.4rem .8rem;font-family:JetBrains Mono,monospace;font-size:.72rem;cursor:pointer;">'+
+    'Save & Send OTP</button></div>';
+  setTimeout(function(){
+    var inp = document.getElementById('new-phone-inp');
+    if(inp) inp.focus();
+  }, 100);
+}
+
+function savePhoneAndSendOTP() {
+  var inp = document.getElementById('new-phone-inp');
+  if (!inp) return;
+  var raw = inp.value.trim();
+  if (!raw) { showToast('Enter a phone number'); return; }
+  var digits = raw.replace(/[^\d+]/g,'');
+  if (!digits.startsWith('+')) digits = '+91' + digits;
+  if (digits.length < 12) { showToast('Invalid number: ' + digits); return; }
+
+  /* Save to Firestore */
+  if (_currentUser && _fbDb) {
+    _fbDb.collection('users').doc(_currentUser.uid)
+      .update({ phone: digits })
+      .then(function() {
+        if (!_currentUser._profile) _currentUser._profile = {};
+        _currentUser._profile.phone = digits;
+        showToast('Phone saved: ' + maskPhone(digits));
+        /* Now send OTP */
+        sendVaultOTP();
+      })
+      .catch(function(e) { showToast('Save failed: ' + e.message); });
+  }
+}
+
+function _doSendOTP(phone, setErr, clearErr) {
+  /* Abort if running from file:// — reCAPTCHA won't work */
+  if (window.location.protocol === 'file:') {
+    setErr('Open the app via http://localhost:8080 — OTP does not work on file://');
     return;
   }
 
-  setErr('Sending OTP to ' + maskPhone(phone) + '...');
+  setErr('Loading reCAPTCHA...');
+  _vaultPreOTPEmail = _currentUser ? (_currentUser.email || '') : '';
 
-  /* Destroy any previous recaptcha */
+  /* Destroy previous verifier */
   if (_otpRecaptchaVerifier) {
     try { _otpRecaptchaVerifier.clear(); } catch(e) {}
     _otpRecaptchaVerifier = null;
   }
 
-  /* The compat SDK RecaptchaVerifier must use the MAIN _fbAuth instance.
-     To avoid auth/internal-error we sign in with phone on the SAME app
-     but use a NAMED secondary app so it does not overwrite the main session. */
+  /* Get/create the container div */
+  var container = document.getElementById('recaptcha-vault');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'recaptcha-vault';
+    document.body.appendChild(container);
+  }
+  container.innerHTML = '';
+  container.style.cssText = 'margin:.8rem auto;display:flex;justify-content:center;min-height:78px;';
+
+  _fbAuth.useDeviceLanguage();
+
   try {
-    /* Get or create secondary app */
-    var secApp;
-    try { secApp = firebase.app('dastavez-vault'); }
-    catch(noApp) {
-      secApp = firebase.initializeApp(FIREBASE_CONFIG, 'dastavez-vault');
-    }
-    var secAuth = secApp.auth();
-    secAuth.useDeviceLanguage();
-
-    /* Render invisible recaptcha into the container div */
-    var container = document.getElementById('recaptcha-vault');
-    if (!container) {
-      /* Create the container dynamically if it doesn't exist */
-      container = document.createElement('div');
-      container.id = 'recaptcha-vault';
-      document.body.appendChild(container);
-    }
-    /* Clear old recaptcha HTML */
-    container.innerHTML = '';
-
     _otpRecaptchaVerifier = new firebase.auth.RecaptchaVerifier(container, {
-      size: 'invisible',
-      callback: function() {},
+      size: 'normal',
+      callback: function() {
+        /* reCAPTCHA solved — send SMS */
+        console.log('[Vault OTP] reCAPTCHA solved, sending SMS to', maskPhone(phone));
+        setErr('Sending OTP...');
+        _fbAuth.signInWithPhoneNumber(phone, _otpRecaptchaVerifier)
+          .then(function(result) {
+            _otpConfirmResult = result;
+            clearErr();
+            container.style.display = 'none';
+            /* Show OTP digit boxes */
+            var s = document.getElementById('otp-send-section');
+            if (s) s.style.display = 'none';
+            ['otp-verify-section','vault-otp-inputs'].forEach(function(id){
+              var el = document.getElementById(id);
+              if (el) el.style.display = '';
+            });
+            var first = document.getElementById('votp0') || document.getElementById('otp0');
+            if (first) { first.value=''; first.focus(); }
+            showToast('OTP sent to ' + maskPhone(phone));
+          })
+          .catch(function(e) {
+            _otpRecaptchaVerifier = null;
+            console.error('[Vault OTP]', e.code, e.message);
+            setErr(_friendlyOTPError(e, phone));
+          });
+      },
       'expired-callback': function() {
         _otpRecaptchaVerifier = null;
-        setErr('Recaptcha expired. Please try again.');
+        container.innerHTML = '';
+        setErr('reCAPTCHA expired — click Send OTP again.');
+      },
+      'error-callback': function(err) {
+        console.error('[Vault OTP] reCAPTCHA error:', err);
+        setErr('reCAPTCHA failed. Ensure www.sianap.com is in Firebase → Auth → Authorized domains.');
       }
-    }, secApp /* pass secondary app to RecaptchaVerifier */);
-
-    _otpRecaptchaVerifier.render().then(function() {
-      return secAuth.signInWithPhoneNumber(phone, _otpRecaptchaVerifier);
-    }).then(function(confirmResult) {
-      _otpConfirmResult = confirmResult;
-      clearErr();
-
-      /* Show OTP input fields */
-      ['otp-send-section'].forEach(function(id){
-        var el=document.getElementById(id); if(el)el.style.display='none';
-      });
-      ['otp-verify-section','vault-otp-inputs'].forEach(function(id){
-        var el=document.getElementById(id); if(el)el.style.display='';
-      });
-
-      /* Focus first input */
-      var first = document.getElementById('votp0') || document.getElementById('otp0');
-      if (first) setTimeout(function(){ first.focus(); }, 100);
-
-      showToast('OTP sent to ' + maskPhone(phone));
-
-    }).catch(function(e) {
-      _otpRecaptchaVerifier = null;
-      var msg = 'Failed to send OTP';
-      if (e.code === 'auth/invalid-phone-number')
-        msg = 'Invalid number: ' + phone + '. Use format +91XXXXXXXXXX';
-      else if (e.code === 'auth/too-many-requests')
-        msg = 'Too many attempts. Wait a few minutes and retry.';
-      else if (e.code === 'auth/internal-error')
-        msg = 'Firebase error. Ensure Phone auth is enabled in Firebase Console.';
-      else if (e.code === 'auth/captcha-check-failed')
-        msg = 'Recaptcha failed. Try refreshing the page.';
-      else msg = e.message || msg;
-      setErr(msg);
     });
+
+    _otpRecaptchaVerifier.render()
+      .then(function() {
+        setErr('Please complete the reCAPTCHA above to receive your OTP.');
+        console.log('[Vault OTP] reCAPTCHA widget rendered for', maskPhone(phone));
+      })
+      .catch(function(e) {
+        _otpRecaptchaVerifier = null;
+        console.error('[Vault OTP] render failed:', e);
+        setErr('reCAPTCHA failed to load: ' + (e.message || e.code || e));
+      });
 
   } catch(e) {
     _otpRecaptchaVerifier = null;
+    console.error('[Vault OTP] exception:', e);
     setErr('Error: ' + (e.message || e));
   }
+}
+
+function _friendlyOTPError(e, phone) {
+  var serverMsg = '';
+  try {
+    var m = e.message && e.message.match(/\{[\s\S]*\}/);
+    if (m) {
+      var obj = JSON.parse(m[0]);
+      serverMsg = (obj.error && obj.error.message) || '';
+    }
+  } catch(pe) {}
+  console.error('[Vault OTP] full error:', e.code, e.message, serverMsg);
+  if (serverMsg === 'INVALID_APP_CREDENTIAL' || e.code === 'auth/captcha-check-failed')
+    return 'reCAPTCHA invalid. Refresh and try again.';
+  if (serverMsg === 'INVALID_PHONE_NUMBER' || e.code === 'auth/invalid-phone-number')
+    return 'Invalid number: ' + phone + ' — use +91XXXXXXXXXX';
+  if (serverMsg === 'BILLING_NOT_ENABLED')
+    return 'Add billing to Firebase project to send SMS.';
+  if (serverMsg === 'TOO_MANY_ATTEMPTS_TRY_LATER' || e.code === 'auth/too-many-requests')
+    return 'Too many attempts. Wait a few minutes.';
+  if (e.code === 'auth/unauthorized-domain')
+    return 'Add www.sianap.com to Firebase Console → Auth → Authorized domains.';
+  if (e.code === 'auth/quota-exceeded')
+    return 'Daily SMS limit (10/day) reached. Add billing to increase.';
+  if (serverMsg) return 'Firebase: ' + serverMsg;
+  return e.message || ('Error: ' + e.code);
 }
 
 function otpNext(input, idx) {
