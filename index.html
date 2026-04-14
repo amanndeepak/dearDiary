@@ -839,7 +839,6 @@ body.focus-mode .app{justify-content:center;}
     </div>
     <div class="otp-err" id="otp-err"></div>
     <div class="auth-link" onclick="closeVaultOTP()">Cancel</div>
-    <div id="recaptcha-vault"></div>
   </div>
 </div>
 
@@ -888,6 +887,7 @@ body.focus-mode .app{justify-content:center;}
     <button class="modal-x" onclick="closeM('m-vault')">&#10005;</button>
     <div class="modal-title">&#128274; Vault</div>
     <div id="vault-body"></div>
+    <div id="recaptcha-vault" style="display:none;"></div>
   </div>
 </div>
 <!-- CALENDAR MODAL -->
@@ -1935,14 +1935,22 @@ function _doSendOTP(phone, setErr, clearErr) {
   }
 
   /* Get/create the container div */
-  var container = document.getElementById('recaptcha-vault');
+  /* Use vault-recaptcha-wrap (inside vault modal) if available,
+     fall back to recaptcha-vault otherwise */
+  var container = document.getElementById('vault-recaptcha-wrap') ||
+                  document.getElementById('recaptcha-vault');
   if (!container) {
     container = document.createElement('div');
     container.id = 'recaptcha-vault';
     document.body.appendChild(container);
   }
   container.innerHTML = '';
-  container.style.cssText = 'margin:.8rem auto;display:flex;justify-content:center;min-height:78px;';
+  container.style.cssText = 'margin:.6rem auto 0;display:flex;justify-content:center;min-height:78px;';
+  console.log('[Vault OTP] container id:', container.id, '| parent:', container.parentNode && container.parentNode.id);
+
+  /* Hide the Send OTP button once clicked */
+  var sendBtn = document.getElementById('send-otp-btn');
+  if (sendBtn) sendBtn.style.display = 'none';
 
   _fbAuth.useDeviceLanguage();
 
@@ -3682,10 +3690,11 @@ function renderVault(){
       body.innerHTML='<div style="text-align:center;padding:1.5rem 0;">'
         +'<div style="font-size:2.5rem;margin-bottom:.6rem;">🔒</div>'
         +'<div style="font-family:Playfair Display,serif;font-size:1.1rem;color:var(--accent);margin-bottom:.4rem;">Secure Vault</div>'
-        +'<div style="font-family:Lora,serif;font-style:italic;font-size:.78rem;color:var(--muted);margin-bottom:1.2rem;">'
+        +'<div style="font-family:Lora,serif;font-style:italic;font-size:.78rem;color:var(--muted);margin-bottom:1rem;">'
         +'OTP will be sent to your registered phone</div>'
-        +'<button class="auth-btn" style="max-width:200px;margin:0 auto;" onclick="sendVaultOTP()">Send OTP →</button>'
-        +'<div id="vault-otp-inputs" style="display:none;margin-top:1rem;">'
+        +'<button class="auth-btn" id="send-otp-btn" style="max-width:200px;margin:0 auto;" onclick="sendVaultOTP()">Send OTP →</button>'
+        +'<div id="vault-recaptcha-wrap" style="margin:.8rem auto 0;display:flex;justify-content:center;"></div>'
+        +'<div id="vault-otp-inputs" style="display:none;margin-top:.8rem;">'
         +'<div class="otp-inputs">'
         +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,0)" onkeydown="otpBack(event,0)" id="votp0">'
         +'<input class="otp-inp" maxlength="1" oninput="otpNext(this,1)" onkeydown="otpBack(event,1)" id="votp1">'
